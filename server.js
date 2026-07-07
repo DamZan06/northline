@@ -1,36 +1,151 @@
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
+require("dotenv").config();
 
-const app = express();
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getDatabase } = require("firebase-admin/database");
 
-app.use(cors());
-app.use(express.static("public"));
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 
-const GARMIN_URL = "INCOLLA QUI IL TUO URL COMPLETO";
+const app = initializeApp({
+    credential: cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL
+});
 
+const db = getDatabase(app);
 
-app.get("/garmin", async (req, res) => {
+console.log("Firebase collegato");
+console.log("Intervallo:", process.env.UPDATE_INTERVAL);
+
+let running = false;
+
+async function getGarminData() {
+
+    const begin = new Date(
+        Date.now() - Number(process.env.LOOKBACK_SECONDS) * 1000
+    ).toISOString();
+    
+    const url =
+    `https://livetrack.garmin.com/api/sessions/${process.env.GARMIN_SESSION_ID}/track-points/common?token=${process.env.GARMIN_TOKEN}&begin=${encodeURIComponent(begin)}`;
 
     try {
 
-        const response = await axios.get(GARMIN_URL);
+        const response = await fetch(url, {
+            headers: {
+                "accept": "*/*",
 
-        res.json(response.data);
+                "livetrack-csrf-token": process.env.GARMIN_CSRF_TOKEN,
 
-    } catch(error) {
+                "cookie": process.env.GARMIN_COOKIE,
 
-        console.log(error.message);
-        res.status(500).json({
-            error: "Garmin request failed"
+                "referer": process.env.GARMIN_REFERER,
+
+                "user-agent": "Mozilla/5.0"
+            }
         });
+
+
+        const text = await response.text();
+
+
+        if (!text) {
+            console.log("Nessun nuovo punto ricevuto");
+            return;
+        }
+
+
+        const data = JSON.parse(text);
+
+
+        if (!data.trackPoints || data.trackPoints.length === 0) {
+            console.log("Nessun punto disponibile");
+            return;
+        }
+
+
+        const punti = data.trackPoints.map(p => ({
+
+            id: new Date(p.dateTime).getTime(),
+
+
+            orario: p.dateTime,
+
+
+            coordinate: {
+                lat: p.position.lat,
+                lon: p.position.lon
+            },
+
+
+            distanza: {
+                metri: p.totalDistanceMeters,
+                km: Number((p.totalDistanceMeters / 1000).toFixed(2))
+            },
+
+
+            altitudine: {
+                metri: p.altitude
+            },
+
+
+            velocita: {
+                m_s: p.speedMetersPerSec,
+                km_h: Number((p.speedMetersPerSec * 3.6).toFixed(1))
+            },
+
+
+            tempo_trascorso: {
+                secondi: p.totalDurationSecs,
+                minuti: Number((p.totalDurationSecs / 60).toFixed(1))
+            },
+
+
+            stato: p.pointStatus
+
+        }));
+
+
+        console.table(punti);
+
+
+        // Salvataggio Firebase
+        for (const punto of punti) {
+
+            await db
+                .ref("livetrack/points/" + punto.id)
+                .set(punto);
+
+        }
+
+
+        console.log(`${punti.length} punti salvati su Firebase`);
+
+
+    } catch (error) {
+
+        console.error("Errore:", error);
 
     }
 
-});
+}
 
 
-app.listen(3000, () => {
-    console.log("Server running on http://localhost:3000");
-});
+// Prima esecuzione
+getGarminData();
+
+// Ripeti ogni 10 secondi
+setInterval(async () => {
+
+    if (running) {
+        console.log("Richiesta precedente ancora in corso...");
+        return;
+    }
+
+    running = true;
+
+    try {
+        await getGarminData();
+    } finally {
+        running = false;
+    }
+
+}, Number(process.env.UPDATE_INTERVAL));
