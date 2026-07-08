@@ -80,5 +80,29 @@ async function loadTrack() {
 
 }
 
+function loadGPX(){
+
+    new L.GPX("NorthLine.gpx", {
+
+        async: true,
+
+        polyline_options: {
+            color: "red",
+            weight: 4,
+            opacity: 0.8
+        }
+
+    })
+    .on("loaded", function(e){
+
+        map.fitBounds(e.target.getBounds());
+
+    })
+    .addTo(map);
+
+}
 
 loadTrack();
+
+loadGPX();
+
