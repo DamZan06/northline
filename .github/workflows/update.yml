@@ -23,6 +23,18 @@ jobs:
 
       - name: Run Garmin updater
         env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+
+          GARMIN_SESSION_ID: ${{ secrets.GARMIN_SESSION_ID }}
+          GARMIN_TOKEN: ${{ secrets.GARMIN_TOKEN }}
+          GARMIN_CSRF_TOKEN: ${{ secrets.GARMIN_CSRF_TOKEN }}
+
+          GARMIN_COOKIE: ${{ secrets.GARMIN_COOKIE }}
+
+          GARMIN_REFERER: ${{ secrets.GARMIN_REFERER }}
+
+          UPDATE_INTERVAL: ${{ secrets.UPDATE_INTERVAL }}
+          LOOKBACK_SECONDS: ${{ secrets.LOOKBACK_SECONDS }}
+
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: node index.js
