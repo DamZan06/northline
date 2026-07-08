@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getDatabase } = require("firebase-admin/database");
 
@@ -12,12 +14,21 @@ const db = getDatabase(app);
 
 console.log("Firebase collegato");
 
+let firstRun = true;
 
 async function getGarminData() {
 
-    const begin = new Date(
-        Date.now() - Number(process.env.LOOKBACK_SECONDS) * 1000
-    ).toISOString();
+    let begin;
+
+    if (firstRun) {
+        console.log("Prima esecuzione: scarico tutto lo storico...");
+        begin = new Date(0).toISOString();
+        firstRun = false;
+    } else {
+        begin = new Date(
+            Date.now() - Number(process.env.LOOKBACK_SECONDS) * 1000
+        ).toISOString();
+    }
 
 
     const url =
@@ -108,16 +119,30 @@ async function getGarminData() {
     } catch (error) {
 
         console.error("Errore Garmin:", error);
-        process.exit(1);
 
     }
 
 }
 
 
-// Avvio singolo per GitHub Actions
-getGarminData()
-    .then(() => {
-        console.log("Aggiornamento completato");
-        process.exit(0);
-    });
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function start() {
+
+    while (true) {
+
+        console.log(`[${new Date().toLocaleString()}] Aggiornamento...`);
+
+        try {
+            await getGarminData();
+        } catch (err) {
+            console.error(err);
+        }
+
+        await sleep(Number(process.env.UPDATE_INTERVAL));
+    }
+}
+
+start();
