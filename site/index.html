@@ -1,68 +1,30 @@
 <!DOCTYPE html>
-
 <html>
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Garmin LiveTrack</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link 
+        rel="stylesheet" 
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    >
+</head>
+
 
 <body>
 
-<h1>Garmin LiveTrack Test</h1>
+<h1>Garmin LiveTrack</h1>
 
-<div id="data">
-Caricamento...
-</div>
+<div id="map"></div>
 
 
-<script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-async function update(){
-
-    const response = await fetch("/garmin");
-
-    const data = await response.json();
-
-
-    let point = data.trackPoints[
-        data.trackPoints.length - 1
-    ];
-
-
-    document.getElementById("data").innerHTML = `
-
-    Lat:
-    ${point.position.lat}
-    <br>
-
-    Lon:
-    ${point.position.lon}
-
-    <br><br>
-
-    Velocità:
-    ${(point.speedMetersPerSec*3.6).toFixed(1)}
-    km/h
-
-    <br>
-
-    Altitudine:
-    ${point.altitude}
-    m
-
-    <br>
-
-    Distanza:
-    ${(point.totalDistanceMeters/1000).toFixed(2)}
-    km
-
-    `;
-
-}
-
-
-update();
-
-setInterval(update,20000);
-
-
-</script>
+<script src="script.js"></script>
 
 
 </body>
