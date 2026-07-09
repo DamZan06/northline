@@ -37,6 +37,7 @@ let elevationChart = null;
 let northLineDistance = null;
 let northLineElevation = null;
 
+let lastChartUpdate = 0;
 
 
 // ----------------
@@ -569,9 +570,15 @@ async function loadTrack() {
     }
 
 
+    const now = Date.now();
 
+    if (now - lastChartUpdate >= 60000) {
 
-    createCharts(points);
+        createCharts(points);
+
+        lastChartUpdate = now;
+
+    }
 
 }
 
@@ -672,7 +679,7 @@ loadTrack();
 
 setInterval(
     loadTrack,
-    5000
+    10000
 );
 
 const panel = document.getElementById("statsPanel");
