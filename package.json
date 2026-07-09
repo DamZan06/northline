@@ -16,6 +16,15 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "firebase-admin": "^14.1.0"
-  }
+    "firebase-admin": "^14.1.0",
+    "proj4": "^2.20.9"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DamZan06/garmin-live-track.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DamZan06/garmin-live-track/issues"
+  },
+  "homepage": "https://github.com/DamZan06/garmin-live-track#readme"
 }

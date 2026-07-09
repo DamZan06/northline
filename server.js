@@ -1,5 +1,15 @@
 require("dotenv").config();
 
+const proj4 = require("proj4");
+
+
+// definizione coordinate svizzere LV95
+
+proj4.defs(
+    "EPSG:2056",
+    "+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=2600000 +y_0=1200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs"
+);
+
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getDatabase } = require("firebase-admin/database");
 
@@ -13,6 +23,50 @@ const app = initializeApp({
 const db = getDatabase(app);
 
 console.log("Firebase collegato");
+
+async function getSwissAltitude(lat, lon) {
+
+
+    try {
+
+        // WGS84 -> LV95
+
+        const lv95 = proj4(
+            "EPSG:4326",
+            "EPSG:2056",
+            [
+                lon,
+                lat
+            ]
+        );
+
+
+        const easting = Math.round(lv95[0]);
+        const northing = Math.round(lv95[1]);
+
+
+        const url =
+        `https://api3.geo.admin.ch/rest/services/height?easting=${easting}&northing=${northing}&sr=2056`;
+
+
+        const response = await fetch(url);
+
+
+        const data = await response.json();
+
+
+        return Number(data.height);
+
+
+    } catch(error) {
+
+        console.error("Errore altezza swisstopo:", error);
+
+        return null;
+
+    }
+
+}
 
 let firstRun = true;
 
@@ -66,39 +120,59 @@ async function getGarminData() {
         }
 
 
-        const punti = data.trackPoints.map(p => ({
+        const punti = [];
 
-            id: new Date(p.dateTime).getTime(),
 
-            orario: p.dateTime,
+        for (const p of data.trackPoints) {
 
-            coordinate: {
-                lat: p.position.lat,
-                lon: p.position.lon
-            },
 
-            distanza: {
-                metri: p.totalDistanceMeters,
-                km: Number((p.totalDistanceMeters / 1000).toFixed(2))
-            },
+            const altezzaSwiss = await getSwissAltitude(
+                p.position.lat,
+                p.position.lon
+            );
 
-            altitudine: {
-                metri: p.altitude
-            },
 
-            velocita: {
-                m_s: p.speedMetersPerSec,
-                km_h: Number((p.speedMetersPerSec * 3.6).toFixed(1))
-            },
+            punti.push({
 
-            tempo_trascorso: {
-                secondi: p.totalDurationSecs,
-                minuti: Number((p.totalDurationSecs / 60).toFixed(1))
-            },
+                id: new Date(p.dateTime).getTime(),
 
-            stato: p.pointStatus
+                orario: p.dateTime,
 
-        }));
+
+                coordinate: {
+                    lat: p.position.lat,
+                    lon: p.position.lon
+                },
+
+
+                distanza: {
+                    metri: p.totalDistanceMeters,
+                    km: Number((p.totalDistanceMeters / 1000).toFixed(2))
+                },
+
+
+                altitudine: {
+                    metri: altezzaSwiss
+                },
+
+
+                velocita: {
+                    m_s: p.speedMetersPerSec,
+                    km_h: Number((p.speedMetersPerSec * 3.6).toFixed(1))
+                },
+
+
+                tempo_trascorso: {
+                    secondi: p.totalDurationSecs,
+                    minuti: Number((p.totalDurationSecs / 60).toFixed(1))
+                },
+
+
+                stato: p.pointStatus
+
+            });
+
+        }
 
 
         console.table(punti);

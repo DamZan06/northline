@@ -1,32 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 
 <head>
+
     <meta charset="UTF-8">
 
-    <title>Garmin LiveTrack</title>
+    <title>North Line Live</title>
 
     <link rel="stylesheet" href="style.css">
 
-    <link 
-        rel="stylesheet" 
-        href="https://unpkg.com/leaflet/dist/leaflet.css"
-    >
+    <link rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css">
+
 </head>
 
 
 <body>
 
-<h1>Garmin LiveTrack</h1>
+
+<!-- Pannello statistiche -->
+
+<div id="statsPanel">
+
+
+    <div id="statsHeader">
+
+        <div id="distance"></div>
+        <div id="time"></div>
+        <div id="elevation"></div>
+        <div id="speed"></div>
+
+    </div>
+
+
+    <div id="statsContent">
+
+        <h3>Velocità</h3>
+
+        <canvas id="speedChart"></canvas>
+
+
+        <h3>Profilo altimetrico</h3>
+
+        <canvas id="elevationChart"></canvas>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- Mappa -->
 
 <div id="map"></div>
 
 
+
+
+<!-- Librerie -->
+
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/2.1.2/gpx.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<!-- Script -->
+
 
 <script src="script.js"></script>
+
 
 </body>
 
