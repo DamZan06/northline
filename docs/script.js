@@ -672,7 +672,7 @@ loadTrack();
 
 setInterval(
     loadTrack,
-    1000
+    5000
 );
 
 const panel = document.getElementById("statsPanel");
