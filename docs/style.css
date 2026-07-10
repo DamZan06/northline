@@ -223,3 +223,81 @@ canvas {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
 }
+
+/* ---------------- */
+/* VERSIONE MOBILE */
+/* ---------------- */
+
+@media (max-width: 600px) {
+
+    #statsPanel {
+
+        top: 10px;
+        left: 10px;
+
+        width: 160px;
+
+        padding: 12px;
+
+        border-radius: 15px;
+
+    }
+
+
+    #statsHeader {
+
+        gap: 6px;
+
+        font-size: 14px;
+
+    }
+
+
+    #statsPanel.expanded {
+
+        width: calc(100vw - 40px);
+
+        max-height: calc(100vh - 40px);
+
+    }
+
+
+    #statsPanel.expanded #statsHeader {
+
+        grid-template-columns: repeat(2, 1fr);
+
+        font-size: 18px;
+
+        gap: 12px;
+
+    }
+
+
+    #statsContent h3 {
+
+        font-size: 16px;
+
+    }
+
+
+    .chartContainer {
+
+        height: 180px;
+
+    }
+
+
+    #progressText {
+
+        font-size: 15px;
+
+    }
+
+
+    #progressBarBackground {
+
+        height: 14px;
+
+    }
+
+}
