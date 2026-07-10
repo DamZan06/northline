@@ -481,15 +481,9 @@ async function loadTrack() {
         ]
     );
 
+    const currentPosition = coordinates[coordinates.length - 1];
 
 
-
-
-    if (garminLine) {
-
-        map.removeLayer(garminLine);
-
-    }
 
     if (!startMarker) {
 
@@ -501,34 +495,43 @@ async function loadTrack() {
 
     }
 
-    garminLine = L.polyline(
-        coordinates,
-        {
-            color: "blue",
-            weight: 5
-        }
-    )
-    .addTo(map);
+    if (garminLine) {
 
-    if (liveMarker) {
-        map.removeLayer(liveMarker);
+        garminLine.setLatLngs(coordinates);
+
+    } else {
+
+        garminLine = L.polyline(
+            coordinates,
+            {
+                color:"blue",
+                weight:5
+            }
+        ).addTo(map);
+
     }
 
+    if (liveMarker) {
 
-    const currentPosition = coordinates[coordinates.length - 1];
+        liveMarker.setLatLng(currentPosition);
 
+    } else {
 
-    liveMarker = L.circleMarker(
-        currentPosition,
-        {
-            radius: 10,
-            color: "white",
-            weight: 3,
-            fillColor: "blue",
-            fillOpacity: 1
-        }
-    )
-    .addTo(map);
+        liveMarker = L.circleMarker(
+            currentPosition,
+            {
+                radius: 10,
+                color: "white",
+                weight: 3,
+                fillColor: "blue",
+                fillOpacity: 1
+            }
+        ).addTo(map);
+
+        liveMarker.bindPopup("");
+
+    }
+
 
 
     const googleMapsURL =
@@ -538,16 +541,14 @@ async function loadTrack() {
         + currentPosition[1];
 
 
-    liveMarker.bindPopup(
-        `
+    liveMarker.setPopupContent(`
         <b>Posizione attuale</b>
         <br><br>
 
         <button onclick="window.open('${googleMapsURL}', '_blank')">
             Indicazioni Google Maps
         </button>
-        `
-    );
+    `);
 
 
     liveMarker.bringToFront();
