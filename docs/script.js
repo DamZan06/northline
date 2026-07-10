@@ -1,5 +1,5 @@
 const firebaseURL =
-    "https://garmin-live-track-47fa9-default-rtdb.europe-west1.firebasedatabase.app/livetrack/points.json";
+    "https://northline-a4eaa-default-rtdb.europe-west1.firebasedatabase.app/livetrack/points.json";
 
 
 // ----------------
