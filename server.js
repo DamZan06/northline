@@ -13,7 +13,7 @@ proj4.defs(
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getDatabase } = require("firebase-admin/database");
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const serviceAccount = require("./serviceAccountKey.json");
 
 const app = initializeApp({
     credential: cert(serviceAccount),
@@ -74,6 +74,11 @@ async function getGarminData() {
 
     let begin;
 
+    console.log("SESSION_ID:", process.env.GARMIN_SESSION_ID);
+    console.log("TOKEN:", process.env.GARMIN_TOKEN);
+    console.log("CSRF:", process.env.GARMIN_CSRF_TOKEN);
+    console.log("COOKIE presente:", process.env.LIVETRACK_SESSION);
+
     if (firstRun) {
         console.log("Prima esecuzione: scarico tutto lo storico...");
         begin = new Date(0).toISOString();
@@ -89,13 +94,15 @@ async function getGarminData() {
         `https://livetrack.garmin.com/api/sessions/${process.env.GARMIN_SESSION_ID}/track-points/common?token=${process.env.GARMIN_TOKEN}&begin=${encodeURIComponent(begin)}`;
 
 
+    console.log(url);
+
     try {
 
         const response = await fetch(url, {
             headers: {
                 "accept": "*/*",
                 "livetrack-csrf-token": process.env.GARMIN_CSRF_TOKEN,
-                "cookie": process.env.GARMIN_COOKIE,
+                "cookie": process.env.LIVETRACK_SESSION,
                 "referer": process.env.GARMIN_REFERER,
                 "user-agent": "Mozilla/5.0"
             }
@@ -103,6 +110,10 @@ async function getGarminData() {
 
 
         const text = await response.text();
+
+        console.log("Status:", response.status);
+        console.log("Body:");
+        console.log(text);
 
 
         if (!text) {
