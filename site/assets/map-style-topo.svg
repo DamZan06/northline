@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" role="img" aria-label="Topografico">
-  <rect width="120" height="80" rx="12" fill="#f7f0e2"/>
-  <rect x="8" y="10" width="104" height="60" rx="8" fill="#fffdf8" stroke="#8c6e3f" stroke-width="2"/>
-  <path d="M18 56l18-20 12 10 18-24 14 14 16-10" stroke="#4f7d3b" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M18 24h84" stroke="#b38445" stroke-width="2" stroke-dasharray="4 4"/>
-</svg>

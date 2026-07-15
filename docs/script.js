@@ -9,6 +9,8 @@ let liveMarker = null;
 let visitorMarker = null;
 let chartInstances = {};
 let activeLayer = null;
+let gpxTotalKm = null;
+let gpxCoords = [];
 function getTileProviders() {
     if (typeof L === 'undefined') return {};
     return {
@@ -78,14 +80,14 @@ function buildSummary(points) {
         duration,
         speed,
         elevationGain,
-        progress: Math.min(totalDistance / 290 * 100, 100),
+        progress: Math.min(totalDistance / (gpxTotalKm || 290) * 100, 100),
         status: speed > 0.5 ? 'In movimento' : 'In pausa'
     };
 }
 function updateHomeSummary(summary) {
     if (!summary) return;
     document.getElementById('homeDistance').textContent = summary.totalDistance.toFixed(1);
-    document.getElementById('homeRemaining').textContent = Math.max(0, 290 - summary.totalDistance).toFixed(1);
+    document.getElementById('homeRemaining').textContent = Math.max(0, (gpxTotalKm || 290) - summary.totalDistance).toFixed(1);
     document.getElementById('homeCompletion').textContent = `${summary.progress.toFixed(1)}%`;
     document.getElementById('homeTime').textContent = formatTime(summary.duration);
     document.getElementById('homeGain').textContent = Math.round(summary.elevationGain);
@@ -133,6 +135,17 @@ function addMapControl() {
                 card.dataset.key = key;
                 card.setAttribute('aria-label', title);
                 const preview = L.DomUtil.create('span', `style-preview ${key}`, card);
+                // use project assets for preview images
+                const img = document.createElement('img');
+                img.alt = title;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                if (key === 'osm') img.src = 'assets/mappa.png';
+                if (key === 'satellite') img.src = 'assets/sat.png';
+                if (key === 'topo') img.src = 'assets/topo.png';
+                preview.appendChild(img);
                 const label = L.DomUtil.create('span', 'style-label', card);
                 label.textContent = key === 'osm' ? 'Mappa' : key === 'satellite' ? 'Sat' : 'Topo';
                 L.DomEvent.disableClickPropagation(card);
@@ -180,6 +193,22 @@ function initMap() {
             if (track && typeof track.getBounds === 'function') {
                 mapInstance.fitBounds(track.getBounds(), { padding: [40, 40] });
             }
+            try {
+                gpxCoords = track._coords || [];
+                gpxTotalKm = track._info && track._info.length ? track._info.length / 1000 : null;
+                if (gpxCoords.length) {
+                    const first = gpxCoords[0];
+                    const last = gpxCoords[gpxCoords.length - 1];
+                    if (!startMarker) startMarker = L.marker([first.lat, first.lng]).addTo(mapInstance);
+                    if (finishMarker) mapInstance.removeLayer(finishMarker);
+                    finishMarker = L.marker([last.lat, last.lng], { icon: L.icon({ iconUrl: 'assets/icons/finish-flag.gif', iconSize: [45,45], iconAnchor: [22,45] }) }).addTo(mapInstance);
+                    // refresh live UI using GPX total if we are on the live page
+                    fetchPoints().then(points => {
+                        const s = buildSummary(points);
+                        try { if (s) { updateLiveUI(s); refreshMapRoute(s.points); } } catch(e){}
+                    }).catch(()=>{});
+                }
+            } catch (err) { console.warn('Errore lettura GPX info', err); }
         }).on('error', e => {
             console.warn('Impossibile caricare GPX:', e);
         }).addTo(mapInstance);
@@ -193,11 +222,31 @@ function refreshMapRoute(points) {
     const shouldFitToBounds = !routeLine;
     if (routeLine) routeLine.setLatLngs(coords);
     else routeLine = L.polyline(coords, { color: '#4fc3ff', weight: 5, opacity: 0.8 }).addTo(mapInstance);
-    if (!startMarker) startMarker = L.marker(coords[0]).addTo(mapInstance).bindPopup('Partenza');
-    if (!finishMarker) finishMarker = L.marker(coords[coords.length - 1]).addTo(mapInstance).bindPopup('Posizione attuale');
-    else finishMarker.setLatLng(coords[coords.length - 1]);
-    if (!liveMarker) liveMarker = L.circleMarker(coords[coords.length - 1], { radius: 10, fillColor: '#49a8ff', color: '#fff', weight: 2, fillOpacity: 0.95 }).addTo(mapInstance);
-    else liveMarker.setLatLng(coords[coords.length - 1]);
+    // Use GPX-defined start/finish when available; no popups
+    if (!startMarker && gpxCoords.length) {
+        const first = gpxCoords[0];
+        startMarker = L.marker([first.lat, first.lng]).addTo(mapInstance);
+    }
+    if (gpxCoords.length) {
+        const last = gpxCoords[gpxCoords.length - 1];
+        if (!finishMarker) finishMarker = L.marker([last.lat, last.lng], { icon: L.icon({ iconUrl: 'assets/icons/finish-flag.gif', iconSize: [45,45], iconAnchor: [22,45] }) }).addTo(mapInstance);
+        else finishMarker.setLatLng([last.lat, last.lng]);
+    }
+    // live marker as blue dot only, with click to open Google Maps directions
+    if (!liveMarker) {
+        liveMarker = L.circleMarker(coords[coords.length - 1], { radius: 10, fillColor: '#49a8ff', color: '#fff', weight: 2, fillOpacity: 0.95 }).addTo(mapInstance);
+        liveMarker.on('click', () => {
+            if (!gpxCoords || gpxCoords.length === 0) { alert('GPX non ancora caricato'); return; }
+            const dest = gpxCoords[gpxCoords.length - 1];
+            if (confirm('Aprire indicazioni su Google Maps da qui fino all\'arrivo?')) {
+                const origin = coords[coords.length - 1];
+                const url = `https://www.google.com/maps/dir/?api=1&origin=${origin[0]},${origin[1]}&destination=${dest.lat},${dest.lng}`;
+                window.open(url, '_blank');
+            }
+        });
+    } else {
+        liveMarker.setLatLng(coords[coords.length - 1]);
+    }
     if (shouldFitToBounds) {
         mapInstance.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
     }
@@ -205,7 +254,7 @@ function refreshMapRoute(points) {
 function updateLiveUI(summary) {
     if (!summary) return;
     document.getElementById('distance').textContent = `${summary.totalDistance.toFixed(1)} km`;
-    document.getElementById('remaining').textContent = `${Math.max(0, 290 - summary.totalDistance).toFixed(1)} km`;
+    document.getElementById('remaining').textContent = `${Math.max(0, (gpxTotalKm || 290) - summary.totalDistance).toFixed(1)} km`;
     document.getElementById('completion').textContent = `${summary.progress.toFixed(1)}%`;
     document.getElementById('completionText').textContent = `${summary.progress.toFixed(1)}%`;
     document.getElementById('speed').textContent = `${summary.speed.toFixed(1)} km/h`;
@@ -248,6 +297,18 @@ async function initLivePage() {
         refreshMapRoute(summary.points);
         updateVisitorDistance(summary.lastPoint);
     }
+    // center-live button
+    const centerBtn = document.getElementById('centerLiveBtn');
+    if (centerBtn) {
+        centerBtn.addEventListener('click', () => {
+            if (!mapInstance) return;
+            const pts = (summary && summary.points) || [];
+            if (pts.length) {
+                const last = pts[pts.length - 1];
+                mapInstance.setView([last.coordinate.lat, last.coordinate.lon], Math.max(mapInstance.getZoom(), 14));
+            }
+        });
+    }
     setInterval(async () => {
         const points = await fetchPoints();
         const summary = buildSummary(points);
@@ -287,7 +348,7 @@ async function initDashboardPage() {
     const metricElevation = document.getElementById('metricElevation');
     const metricTime = document.getElementById('metricTime');
     if (metricDistance) metricDistance.textContent = `${summary.totalDistance.toFixed(1)} km`;
-    if (metricRemaining) metricRemaining.textContent = `${Math.max(0, 290 - summary.totalDistance).toFixed(1)} km`;
+    if (metricRemaining) metricRemaining.textContent = `${Math.max(0, (gpxTotalKm || 290) - summary.totalDistance).toFixed(1)} km`;
     if (metricCompletion) metricCompletion.textContent = `${summary.progress.toFixed(1)}%`;
     if (metricSpeed) metricSpeed.textContent = `${summary.speed.toFixed(1)} km/h`;
     if (metricAltitude) metricAltitude.textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
