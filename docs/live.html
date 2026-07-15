@@ -107,7 +107,10 @@
             </aside>
             <div class="map-wrap">
                 <div id="map"></div>
-                <button id="centerLiveBtn" class="geo-button" title="Centra sulla posizione live">📍</button>
+                <div class="map-actions" aria-label="Controlli mappa">
+                    <button id="centerLiveBtn" class="geo-button" title="Centra sulla posizione live">📍</button>
+                    <button id="mapFullscreenBtn" class="geo-button" title="Mappa a schermo intero">⛶</button>
+                </div>
                 <div class="map-footer">
                     <!-- hint removed per pulizia UI -->
                 </div>
@@ -117,6 +120,6 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=20260715"></script>
 </body>
 </html>

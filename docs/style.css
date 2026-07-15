@@ -112,6 +112,32 @@ img { max-width: 100%; display: block; }
     font-size: 18px;
     padding: 0;
 }
+.map-actions {
+    position: absolute;
+    right: 16px;
+    bottom: 74px;
+    z-index: 900;
+    display: grid;
+    gap: 10px;
+}
+.map-wrap--fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    border-radius: 0 !important;
+    z-index: 5000 !important;
+}
+.map-wrap--fullscreen #map {
+    min-height: 100vh !important;
+    height: 100vh !important;
+}
+.map-wrap--fullscreen .map-footer {
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+}
 .style-panel {
     position: absolute;
     right: 0;

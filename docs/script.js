@@ -11,6 +11,8 @@ let chartInstances = {};
 let activeLayer = null;
 let gpxTotalKm = null;
 let gpxCoords = [];
+let gpxLoadPromise = null;
+let latestLiveCoord = null;
 function getTileProviders() {
     if (typeof L === 'undefined') return {};
     return {
@@ -56,7 +58,9 @@ async function fetchPoints() {
         const response = await fetch(firebaseURL);
         const data = await response.json();
         if (!data) return [];
-        return Object.values(data).sort((a, b) => a.id - b.id);
+        return Object.values(data)
+            .filter(point => point && point.coordinate && Number.isFinite(point.coordinate.lat) && Number.isFinite(point.coordinate.lon) && point.distanza)
+            .sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
     } catch (error) {
         console.warn('Impossibile leggere i dati live:', error);
         return [];
@@ -65,12 +69,14 @@ async function fetchPoints() {
 function buildSummary(points) {
     if (!points.length) return null;
     const lastPoint = points[points.length - 1];
-    const totalDistance = lastPoint.distanza.km ?? 0;
+    const totalDistance = Number(lastPoint.distanza?.km ?? 0);
     const duration = lastPoint.tempo_trascorso?.secondi ?? 0;
-    const speed = duration > 0 ? (lastPoint.distanza.metri / duration) * 3.6 : 0;
+    const speed = duration > 0 ? ((lastPoint.distanza?.metri ?? 0) / duration) * 3.6 : 0;
     const elevationGain = points.reduce((acc, point, index) => {
         if (index === 0) return 0;
-        const diff = point.altitudine.metri - points[index - 1].altitudine.metri;
+        const currentAlt = Number(point.altitudine?.metri ?? 0);
+        const prevAlt = Number(points[index - 1].altitudine?.metri ?? 0);
+        const diff = currentAlt - prevAlt;
         return acc + Math.max(diff, 0);
     }, 0);
     return {
@@ -138,6 +144,67 @@ function computeBlendedRemaining(summary) {
     const weightGpx = 1 - progressFrac;
     const blended = weightGpx * remainingGpx + (1 - weightGpx) * remainingLive;
     return Math.max(0, blended);
+}
+
+function parseGpxXml(gpxText) {
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(gpxText, 'application/xml');
+    const trkpts = Array.from(xml.querySelectorAll('trkpt'));
+    const coords = trkpts.map(pt => ({
+        lat: Number(pt.getAttribute('lat')),
+        lng: Number(pt.getAttribute('lon'))
+    })).filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng));
+    let totalKm = 0;
+    for (let i = 1; i < coords.length; i += 1) {
+        totalKm += haversineKm(coords[i - 1].lat, coords[i - 1].lng, coords[i].lat, coords[i].lng);
+    }
+    return { coords, totalKm };
+}
+
+async function ensureGpxDataLoaded() {
+    if (gpxCoords.length && Number.isFinite(gpxTotalKm) && gpxTotalKm > 0) return;
+    if (gpxLoadPromise) {
+        await gpxLoadPromise;
+        return;
+    }
+    gpxLoadPromise = fetch('data/NorthLine_3.gpx')
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.text();
+        })
+        .then(gpxText => {
+            const parsed = parseGpxXml(gpxText);
+            if (parsed.coords.length) {
+                gpxCoords = parsed.coords;
+                gpxTotalKm = parsed.totalKm;
+            }
+        })
+        .catch(error => {
+            console.warn('Impossibile caricare GPX (fallback parser):', error);
+        })
+        .finally(() => {
+            gpxLoadPromise = null;
+        });
+    await gpxLoadPromise;
+}
+
+function centerOnLatestLive() {
+    if (!mapInstance || !latestLiveCoord) return;
+    mapInstance.setView(latestLiveCoord, Math.max(mapInstance.getZoom(), 14));
+}
+
+function openGoogleDirectionsToFinish(originLatLng) {
+    if (!originLatLng || !gpxCoords.length) {
+        alert('Percorso GPX non ancora caricato.');
+        return;
+    }
+    const dest = gpxCoords[gpxCoords.length - 1];
+    const originLat = Number(originLatLng.lat).toFixed(6);
+    const originLng = Number(originLatLng.lng).toFixed(6);
+    const destLat = Number(dest.lat).toFixed(6);
+    const destLng = Number(dest.lng).toFixed(6);
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=walking`;
+    window.open(url, '_blank', 'noopener,noreferrer');
 }
 function addMapControl() {
     if (typeof L === 'undefined' || !mapInstance) return;
@@ -223,8 +290,15 @@ function initMap() {
                 mapInstance.fitBounds(track.getBounds(), { padding: [40, 40] });
             }
             try {
-                gpxCoords = track._coords || [];
-                gpxTotalKm = track._info && track._info.length ? track._info.length / 1000 : null;
+                if (track._coords && track._coords.length) {
+                    gpxCoords = track._coords;
+                }
+                if (track._info && track._info.length) {
+                    gpxTotalKm = track._info.length / 1000;
+                }
+                if (!gpxCoords.length || !Number.isFinite(gpxTotalKm) || gpxTotalKm <= 0) {
+                    ensureGpxDataLoaded().catch(() => {});
+                }
                 if (gpxCoords.length) {
                     const first = gpxCoords[0];
                     const last = gpxCoords[gpxCoords.length - 1];
@@ -251,6 +325,7 @@ function refreshMapRoute(points) {
     const shouldFitToBounds = !routeLine;
     if (routeLine) routeLine.setLatLngs(coords);
     else routeLine = L.polyline(coords, { color: '#4fc3ff', weight: 5, opacity: 0.8 }).addTo(mapInstance);
+    latestLiveCoord = coords[coords.length - 1];
     // Use GPX-defined start/finish when available; no popups
     if (!startMarker && gpxCoords.length) {
         const first = gpxCoords[0];
@@ -265,13 +340,8 @@ function refreshMapRoute(points) {
     if (!liveMarker) {
         liveMarker = L.circleMarker(coords[coords.length - 1], { radius: 10, fillColor: '#49a8ff', color: '#fff', weight: 2, fillOpacity: 0.95 }).addTo(mapInstance);
         liveMarker.on('click', () => {
-            if (!gpxCoords || gpxCoords.length === 0) { alert('GPX non ancora caricato'); return; }
-            const dest = gpxCoords[gpxCoords.length - 1];
-            if (confirm('Aprire indicazioni su Google Maps da qui fino all\'arrivo?')) {
-                const origin = coords[coords.length - 1];
-                const url = `https://www.google.com/maps/dir/?api=1&origin=${origin[0]},${origin[1]}&destination=${dest.lat},${dest.lng}`;
-                window.open(url, '_blank');
-            }
+            const ll = liveMarker.getLatLng();
+            openGoogleDirectionsToFinish(ll);
         });
     } else {
         liveMarker.setLatLng(coords[coords.length - 1]);
@@ -296,16 +366,6 @@ function updateLiveUI(summary) {
     document.getElementById('progressBar').style.width = `${summary.progress.toFixed(1)}%`;
 }
 
-// Auto-init based on body data-page
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        const page = document.body?.dataset?.page || '';
-        if (page === 'live') initLivePage();
-        else if (page === 'dashboard') initDashboardPage();
-        else if (page === 'home') initHomePage();
-        else if (page === 'gallery') initGalleryPage();
-    } catch (err) { console.warn('Init error', err); }
-});
 function updateVisitorDistance(lastPoint) {
     if (!navigator.geolocation) {
         document.getElementById('visitorDistance').textContent = 'Non supportato';
@@ -328,6 +388,7 @@ function updateVisitorDistance(lastPoint) {
 }
 async function initLivePage() {
     initializeTheme();
+    await ensureGpxDataLoaded();
     initMap();
     buildNav();
     document.getElementById('panelToggle')?.addEventListener('click', () => document.getElementById('statsContent')?.classList.toggle('open'));
@@ -341,13 +402,18 @@ async function initLivePage() {
     // center-live button
     const centerBtn = document.getElementById('centerLiveBtn');
     if (centerBtn) {
-        centerBtn.addEventListener('click', () => {
-            if (!mapInstance) return;
-            const pts = (summary && summary.points) || [];
-            if (pts.length) {
-                const last = pts[pts.length - 1];
-                mapInstance.setView([last.coordinate.lat, last.coordinate.lon], Math.max(mapInstance.getZoom(), 14));
-            }
+        centerBtn.addEventListener('click', centerOnLatestLive);
+    }
+
+    const fullscreenBtn = document.getElementById('mapFullscreenBtn');
+    const mapWrap = document.querySelector('.map-wrap');
+    if (fullscreenBtn && mapWrap) {
+        fullscreenBtn.addEventListener('click', () => {
+            mapWrap.classList.toggle('map-wrap--fullscreen');
+            const isFullscreen = mapWrap.classList.contains('map-wrap--fullscreen');
+            fullscreenBtn.textContent = isFullscreen ? '🡼' : '⛶';
+            fullscreenBtn.title = isFullscreen ? 'Esci da schermo intero' : 'Mappa a schermo intero';
+            setTimeout(() => mapInstance?.invalidateSize(), 120);
         });
     }
     setInterval(async () => {
@@ -359,26 +425,29 @@ async function initLivePage() {
 }
 async function initHomePage() {
     initializeTheme();
+    await ensureGpxDataLoaded();
     const points = await fetchPoints();
     const summary = buildSummary(points);
     if (summary) updateHomeSummary(summary);
 }
 function buildChartData(points) {
-    const labels = points.map((_, index) => `${index + 1}`);
+    const safePoints = points.filter(p => p && p.velocita && p.altitudine && p.distanza && p.orario);
+    const labels = safePoints.map((_, index) => `${index + 1}`);
     return {
         labels,
-        speedData: points.map(p => p.velocita.km_h),
-        altitudeData: points.map(p => p.altitudine.metri),
-        dailyLabels: [...new Set(points.map(p => new Date(p.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })))] ,
-        kmDaily: points.reduce((acc, point) => {
+        speedData: safePoints.map(p => Number(p.velocita.km_h ?? 0)),
+        altitudeData: safePoints.map(p => Number(p.altitudine.metri ?? 0)),
+        dailyLabels: [...new Set(safePoints.map(p => new Date(p.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })))] ,
+        kmDaily: safePoints.reduce((acc, point) => {
             const day = new Date(point.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-            acc[day] = Math.max(acc[day] ?? 0, point.distanza.km);
+            acc[day] = Math.max(acc[day] ?? 0, Number(point.distanza.km ?? 0));
             return acc;
         }, {})
     };
 }
 async function initDashboardPage() {
     initializeTheme();
+    await ensureGpxDataLoaded();
     const points = await fetchPoints();
     const summary = buildSummary(points) || { totalDistance: 0, speed: 0, elevationGain: 0, duration: 0, progress: 0, lastPoint: { altitudine: { metri: 0 } } };
     const metricDistance = document.getElementById('metricDistance');
@@ -476,11 +545,13 @@ async function initTimelinePage() {
 }
 async function initReplayPage() {
     initializeTheme();
+    await ensureGpxDataLoaded();
     initMap();
     buildNav();
     const points = await fetchPoints();
     const coords = points.length ? points.map(p => [p.coordinate.lat, p.coordinate.lon]) : [defaultCenter];
-    const route = L.polyline(coords, { color: '#7f7ff', weight: 5 }).addTo(mapInstance);
+    const route = L.polyline(coords, { color: '#7f7dff', weight: 5, opacity: 0.45 }).addTo(mapInstance);
+    const replayTrail = L.polyline([coords[0]], { color: '#7f7dff', weight: 6, opacity: 0.95 }).addTo(mapInstance);
     mapInstance.fitBounds(route.getBounds() || L.latLngBounds(coords), { padding: [40, 40] });
     let index = 0;
     const marker = L.circleMarker(coords[0], { radius: 12, color: '#ffb347', fillColor: '#ffd382', fillOpacity: 1 }).addTo(mapInstance);
@@ -493,13 +564,20 @@ async function initReplayPage() {
             return;
         }
         marker.setLatLng(coords[index]);
+        replayTrail.addLatLng(coords[index]);
         statusLabel.textContent = `Replay ${index + 1}/${coords.length}`;
         mapInstance.panTo(coords[index], { animate: true, duration: 0.45 });
         index += 1;
     }
     document.getElementById('replayPlay')?.addEventListener('click', () => { clearInterval(interval); interval = setInterval(updateMarker, Number(document.getElementById('replaySpeed')?.value || 500)); });
     document.getElementById('replayPause')?.addEventListener('click', () => clearInterval(interval));
-    document.getElementById('replayReset')?.addEventListener('click', () => { clearInterval(interval); index = 0; marker.setLatLng(coords[0]); if (statusLabel) statusLabel.textContent = 'Replay pronto'; });
+    document.getElementById('replayReset')?.addEventListener('click', () => {
+        clearInterval(interval);
+        index = 0;
+        marker.setLatLng(coords[0]);
+        replayTrail.setLatLngs([coords[0]]);
+        if (statusLabel) statusLabel.textContent = 'Replay pronto';
+    });
     document.getElementById('replaySpeed')?.addEventListener('input', event => { document.getElementById('replaySpeedLabel').textContent = `${event.target.value} ms`; });
 }
 async function initProgressPage() {
