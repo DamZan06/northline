@@ -107,18 +107,43 @@ function updateHomeSummary(summary) {
     document.getElementById('homeCompletion').textContent = `${completion.toFixed(1)}%`;
     document.getElementById('homeTime').textContent = formatTime(summary.duration);
     document.getElementById('homeGain').textContent = Math.round(summary.elevationGain);
-    document.getElementById('homeSteps').textContent = Math.round(summary.totalDistance * 1420).toLocaleString();
+    document.getElementById('homeSteps').textContent = computeEstimatedSteps(summary.totalDistance, summary.duration).toLocaleString();
     document.getElementById('homeStatusLabel').textContent = summary.status;
     document.getElementById('homeStatusText').textContent = summary.status === 'In movimento' ? 'Tracker attivo e aggiornato.' : 'Dati disponibili, attesa prossima posizione.';
 }
-function createChart(canvasId, label, labels, data, color) {
+function createChart(canvasId, label, data, color, yAxisLabel = '') {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
     chartInstances[canvasId] = new Chart(ctx, {
         type: 'line',
-        data: { labels, datasets: [{ label, data, borderColor: color, backgroundColor: `${color}33`, tension: 0.3, fill: true, pointRadius: 0 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: true, title: { display: true, text: 'Punti' } }, y: { display: true } } }
+        data: {
+            datasets: [{
+                label,
+                data,
+                parsing: false,
+                borderColor: color,
+                backgroundColor: `${color}33`,
+                tension: 0.3,
+                fill: true,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    type: 'linear',
+                    display: true,
+                    title: { display: true, text: 'Km' }
+                },
+                y: {
+                    display: true,
+                    title: yAxisLabel ? { display: true, text: yAxisLabel } : { display: false, text: '' }
+                }
+            }
+        }
     });
     return chartInstances[canvasId];
 }
@@ -161,6 +186,15 @@ function computeDynamicProgress(totalDistance, remainingDistance) {
     const dynamicTotal = done + remaining;
     if (dynamicTotal <= 0) return 0;
     return Math.min((done / dynamicTotal) * 100, 100);
+}
+
+function computeEstimatedSteps(totalDistanceKm, durationSeconds) {
+    const distance = Math.max(0, Number(totalDistanceKm) || 0);
+    const hours = Math.max(0, Number(durationSeconds) || 0) / 3600;
+    // As effort increases over time, stride tends to shorten and steps/km increase.
+    const fatigueGain = Math.min(hours * 0.03, 0.35);
+    const stepsPerKm = 1420 * (1 + fatigueGain);
+    return Math.round(distance * stepsPerKm);
 }
 
 function parseGpxXml(gpxText) {
@@ -381,7 +415,7 @@ function updateLiveUI(summary) {
     document.getElementById('lastUpdate').textContent = formatRelativeDate(summary.lastPoint.orario);
     document.getElementById('time').textContent = formatTime(summary.duration);
     document.getElementById('elevation').textContent = `${Math.round(summary.elevationGain)} m`;
-    document.getElementById('steps').textContent = Math.round(summary.totalDistance * 1420).toLocaleString();
+    document.getElementById('steps').textContent = computeEstimatedSteps(summary.totalDistance, summary.duration).toLocaleString();
     document.getElementById('progressBar').style.width = `${completion.toFixed(1)}%`;
 }
 
@@ -459,11 +493,29 @@ async function initHomePage() {
 }
 function buildChartData(points) {
     const safePoints = points.filter(p => p && p.velocita && p.altitudine && p.distanza && p.orario);
-    const labels = safePoints.map((_, index) => `${index + 1}`);
+    let cumulativeElevation = 0;
+    const speedSeries = [];
+    const altitudeSeries = [];
+    const elevationSeries = [];
+    const kmSeries = [];
+    safePoints.forEach((point, index) => {
+        const km = Number(point.distanza.km ?? 0);
+        const altitude = Number(point.altitudine.metri ?? 0);
+        const speed = Number(point.velocita.km_h ?? 0);
+        if (index > 0) {
+            const prevAlt = Number(safePoints[index - 1].altitudine.metri ?? 0);
+            cumulativeElevation += Math.max(0, altitude - prevAlt);
+        }
+        speedSeries.push({ x: km, y: speed });
+        altitudeSeries.push({ x: km, y: altitude });
+        elevationSeries.push({ x: km, y: cumulativeElevation });
+        kmSeries.push({ x: km, y: km });
+    });
     return {
-        labels,
-        speedData: safePoints.map(p => Number(p.velocita.km_h ?? 0)),
-        altitudeData: safePoints.map(p => Number(p.altitudine.metri ?? 0)),
+        speedSeries,
+        altitudeSeries,
+        elevationSeries,
+        kmSeries,
         dailyLabels: [...new Set(safePoints.map(p => new Date(p.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })))] ,
         kmDaily: safePoints.reduce((acc, point) => {
             const day = new Date(point.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
@@ -494,11 +546,11 @@ async function initDashboardPage() {
     if (metricAltitude) metricAltitude.textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
     if (metricElevation) metricElevation.textContent = `${Math.round(summary.elevationGain)} m`;
     if (metricTime) metricTime.textContent = formatTime(summary.duration);
-    const chartData = buildChartData(points.length ? points : [{ velocita: { km_h: 0 }, altitudine: { metri: 0 }, orario: new Date().toISOString() }]);
-    createChart('chartSpeed', 'Velocità', chartData.labels, chartData.speedData, '#49a8ff');
-    createChart('chartAltitude', 'Altitudine', chartData.labels, chartData.altitudeData, '#7f7dff');
-    createChart('chartKm', 'Km giornalieri', Object.keys(chartData.kmDaily), Object.values(chartData.kmDaily), '#5dd97d');
-    createChart('chartElevation', 'Dislivello', chartData.labels, chartData.altitudeData.map((value, index) => (index % 5) * 80), '#f3c03d');
+    const chartData = buildChartData(points.length ? points : [{ velocita: { km_h: 0 }, altitudine: { metri: 0 }, distanza: { km: 0 }, orario: new Date().toISOString() }]);
+    createChart('chartSpeed', 'Velocità', chartData.speedSeries, '#49a8ff', 'Km/h');
+    createChart('chartAltitude', 'Altitudine', chartData.altitudeSeries, '#7f7dff', 'm');
+    createChart('chartKm', 'Km cumulati', chartData.kmSeries, '#5dd97d', 'Km');
+    createChart('chartElevation', 'Dislivello cumulato', chartData.elevationSeries, '#f3c03d', 'm');
 }
 async function initGalleryPage() {
     initializeTheme();
