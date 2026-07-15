@@ -71,7 +71,13 @@ function buildSummary(points) {
     if (!points.length) return null;
     const lastPoint = points[points.length - 1];
     const totalDistance = Number(lastPoint.distanza?.km ?? 0);
-    const duration = lastPoint.tempo_trascorso?.secondi ?? 0;
+    const firstPoint = points[0];
+    const startTs = new Date(firstPoint?.orario ?? '').getTime();
+    const endTs = new Date(lastPoint?.orario ?? '').getTime();
+    const elapsedFromTimestamps = Number.isFinite(startTs) && Number.isFinite(endTs) && endTs >= startTs
+        ? Math.floor((endTs - startTs) / 1000)
+        : null;
+    const duration = elapsedFromTimestamps ?? (lastPoint.tempo_trascorso?.secondi ?? 0);
     const speed = duration > 0 ? ((lastPoint.distanza?.metri ?? 0) / duration) * 3.6 : 0;
     const elevationGain = points.reduce((acc, point, index) => {
         if (index === 0) return 0;
