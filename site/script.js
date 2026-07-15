@@ -221,24 +221,29 @@ async function loadTrack() {
     let remainingDistance = null;
 
     if (northLineDistance && gpxTrackPoints.length) {
+        const totalRouteDistance = northLineDistance;
         const livePosition = [lastPoint.coordinate.lat, lastPoint.coordinate.lon];
         const routePoint = findClosestPointOnRoute(livePosition);
 
         if (routePoint) {
             const progressDistance = routePoint.distanceAlongRoute / 1000;
-            const totalRouteDistance = northLineDistance;
             const remainingFromLive = Math.max(0, totalRouteDistance - progressDistance);
             const trackerRemaining = Math.max(0, totalRouteDistance - completedDistance);
             const progressRatio = Math.min(1, Math.max(0, completedDistance / totalRouteDistance));
-            const trackerWeight = Math.max(0.2, 0.9 - progressRatio * 0.7);
+
+            const trackerWeight = Math.max(0.2, 0.85 - progressRatio * 0.6);
             const liveWeight = 1 - trackerWeight;
 
             let mixedRemaining = trackerWeight * trackerRemaining + liveWeight * remainingFromLive;
 
-            if (progressRatio < 0.6) {
-                mixedRemaining += 1.5;
+            if (completedDistance < 5) {
+                mixedRemaining = totalRouteDistance;
+            } else if (progressRatio < 0.25) {
+                mixedRemaining = Math.max(totalRouteDistance * 0.95, remainingFromLive);
+            } else if (progressRatio < 0.6) {
+                mixedRemaining = Math.max(remainingFromLive, trackerRemaining);
             } else {
-                mixedRemaining -= Math.min(2.2, (progressRatio - 0.6) * 3.2);
+                mixedRemaining = Math.min(mixedRemaining, remainingFromLive + 8);
             }
 
             remainingDistance = Math.max(0, mixedRemaining);
