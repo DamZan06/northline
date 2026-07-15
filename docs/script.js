@@ -633,7 +633,7 @@ function showVisitorMarker(position) {
     const coords = [position.coords.latitude, position.coords.longitude];
     latestVisitorCoord = L.latLng(coords[0], coords[1]);
     if (visitorMarker) visitorMarker.setLatLng(coords);
-    else visitorMarker = L.marker(coords, { icon: L.divIcon({ className: 'visitor-icon', html: '<span class="user-location-icon" aria-hidden="true"></span>', iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(mapInstance).bindPopup('La tua posizione');
+    else visitorMarker = L.marker(coords, { icon: L.divIcon({ className: 'visitor-icon', html: '<span class="user-location-icon" aria-hidden="true">👤</span>', iconSize: [28, 28], iconAnchor: [14, 14] }) }).addTo(mapInstance).bindPopup('La tua posizione');
 }
 function initPage() {
     const page = document.body.dataset.page;

@@ -121,12 +121,18 @@ img { max-width: 100%; display: block; }
     gap: 10px;
 }
 .user-location-icon {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 50%;
-    background: radial-gradient(circle at center, #ffffff 0 34%, #0a84ff 35% 100%);
+    background: linear-gradient(180deg, #0a84ff 0%, #0768cc 100%);
     border: 2px solid #ffffff;
-    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.35), 0 2px 6px rgba(10, 132, 255, 0.35);
+    color: #ffffff;
+    font-size: 14px;
+    line-height: 1;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.28), 0 2px 7px rgba(10, 132, 255, 0.35);
 }
 .runner-popup {
     display: grid;
