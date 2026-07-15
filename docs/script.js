@@ -87,7 +87,8 @@ function buildSummary(points) {
 function updateHomeSummary(summary) {
     if (!summary) return;
     document.getElementById('homeDistance').textContent = summary.totalDistance.toFixed(1);
-    document.getElementById('homeRemaining').textContent = Math.max(0, (gpxTotalKm || 290) - summary.totalDistance).toFixed(1);
+    const blended = computeBlendedRemaining(summary);
+    document.getElementById('homeRemaining').textContent = (blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance)).toFixed(1);
     document.getElementById('homeCompletion').textContent = `${summary.progress.toFixed(1)}%`;
     document.getElementById('homeTime').textContent = formatTime(summary.duration);
     document.getElementById('homeGain').textContent = Math.round(summary.elevationGain);
@@ -109,6 +110,34 @@ function createChart(canvasId, label, labels, data, color) {
 function ensureLeafletAssets() {
     if (typeof L === 'undefined' || !L.Icon || !L.Icon.Default) return;
     L.Icon.Default.imagePath = 'https://unpkg.com/leaflet/dist/images/';
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+    const toRad = d => d * Math.PI / 180;
+    const R = 6371; // km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function computeBlendedRemaining(summary) {
+    if (!summary) return null;
+    const totalDistance = summary.totalDistance || 0;
+    const gpxtotal = gpxTotalKm || 290;
+    const remainingGpx = Math.max(0, gpxtotal - totalDistance);
+    // fallback: if we don't have a live point or GPX coords, return GPX remaining
+    if (!summary.lastPoint || !gpxCoords || !gpxCoords.length) return remainingGpx;
+    const last = summary.lastPoint;
+    const dest = gpxCoords[gpxCoords.length - 1];
+    const remainingLive = haversineKm(last.coordinate.lat, last.coordinate.lon, dest.lat, dest.lng);
+    // progress fraction (0..1)
+    const progressFrac = Math.min(Math.max(totalDistance / gpxtotal, 0), 1);
+    // linear blend: weight on GPX decreases linearly with progress (at 0% -> 1, at 100% -> 0)
+    const weightGpx = 1 - progressFrac;
+    const blended = weightGpx * remainingGpx + (1 - weightGpx) * remainingLive;
+    return Math.max(0, blended);
 }
 function addMapControl() {
     if (typeof L === 'undefined' || !mapInstance) return;
@@ -348,7 +377,8 @@ async function initDashboardPage() {
     const metricElevation = document.getElementById('metricElevation');
     const metricTime = document.getElementById('metricTime');
     if (metricDistance) metricDistance.textContent = `${summary.totalDistance.toFixed(1)} km`;
-    if (metricRemaining) metricRemaining.textContent = `${Math.max(0, (gpxTotalKm || 290) - summary.totalDistance).toFixed(1)} km`;
+    const blended = computeBlendedRemaining(summary);
+    if (metricRemaining) metricRemaining.textContent = `${(blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance)).toFixed(1)} km`;
     if (metricCompletion) metricCompletion.textContent = `${summary.progress.toFixed(1)}%`;
     if (metricSpeed) metricSpeed.textContent = `${summary.speed.toFixed(1)} km/h`;
     if (metricAltitude) metricAltitude.textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
