@@ -209,17 +209,15 @@ function centerOnVisitorPosition() {
     mapInstance.setView(latestVisitorCoord, Math.max(mapInstance.getZoom(), 14));
 }
 
-function openGoogleDirectionsUserToRunner() {
-    if (!latestVisitorCoord || !latestLiveCoord) {
-        alert('Posizione utente o corridore non disponibile.');
-        return;
-    }
-    const originLat = Number(latestVisitorCoord.lat).toFixed(6);
-    const originLng = Number(latestVisitorCoord.lng).toFixed(6);
-    const destLat = Number(latestLiveCoord[0]).toFixed(6);
-    const destLng = Number(latestLiveCoord[1]).toFixed(6);
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=walking`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+function buildGoogleDirectionsToRunnerUrl(lat, lng) {
+    const destLat = Number(lat).toFixed(6);
+    const destLng = Number(lng).toFixed(6);
+    return `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=walking`;
+}
+
+function buildRunnerPopupContent(lat, lng) {
+    const directionsUrl = buildGoogleDirectionsToRunnerUrl(lat, lng);
+    return `<div class="runner-popup"><p>Posizione atleta</p><a class="runner-directions-btn" href="${directionsUrl}" target="_blank" rel="noopener noreferrer">Indicazioni</a></div>`;
 }
 function addMapControl() {
     if (typeof L === 'undefined' || !mapInstance) return;
@@ -351,14 +349,13 @@ function refreshMapRoute(points) {
         if (!finishMarker) finishMarker = L.marker([last.lat, last.lng], { icon: L.icon({ iconUrl: 'assets/icons/finish-flag.gif', iconSize: [45,45], iconAnchor: [22,45] }) }).addTo(mapInstance);
         else finishMarker.setLatLng([last.lat, last.lng]);
     }
-    // live marker as blue dot only, with click to open Google Maps directions
+    // live marker with popup and directions button
     if (!liveMarker) {
         liveMarker = L.circleMarker(coords[coords.length - 1], { radius: 10, fillColor: '#49a8ff', color: '#fff', weight: 2, fillOpacity: 0.95 }).addTo(mapInstance);
-        liveMarker.on('click', () => {
-            openGoogleDirectionsUserToRunner();
-        });
+        liveMarker.bindPopup(buildRunnerPopupContent(coords[coords.length - 1][0], coords[coords.length - 1][1]));
     } else {
         liveMarker.setLatLng(coords[coords.length - 1]);
+        liveMarker.setPopupContent(buildRunnerPopupContent(coords[coords.length - 1][0], coords[coords.length - 1][1]));
     }
     if (shouldFitToBounds) {
         mapInstance.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
