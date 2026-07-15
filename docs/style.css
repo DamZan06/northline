@@ -17,7 +17,7 @@ img { max-width: 100%; display: block; }
 .topbar { width: 100%; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; position: sticky; top: 0; z-index: 1000; background: rgba(7, 17, 28, 0.9); backdrop-filter: blur(18px); }
 .map-wrap, #map { position: relative; z-index: 0; }
 .brand { display: flex; gap: 14px; align-items: center; }
-.brand-icon { width: 42px; height: 42px; border-radius: 16px; background: transparent; border: none; padding: 0; object-fit: contain; }
+.brand-icon { width: 42px; height: 42px; border-radius: 50%; background: transparent; border: none; padding: 0; object-fit: cover; }
 .brand-title { display: block; font-size: 1rem; font-weight: 700; }
 .brand-subtitle { display: block; color: var(--muted); font-size: 0.86rem; }
 .main-nav { display: flex; gap: 22px; flex-wrap: wrap; }
@@ -276,8 +276,25 @@ img { max-width: 100%; display: block; }
 .section-intro, .section-status { padding: 0; }
 .site-footer { padding: 22px 32px 30px; color: var(--muted); font-size: 0.95rem; text-align: center; }
 .metric-card, .weather-card, .timeline-event, .badge-card, .gallery-item, .diary-entry { display: grid; }
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+.chart-grid .metric-card {
+    min-height: 320px;
+}
+.chart-grid canvas {
+    width: 100% !important;
+    height: 240px !important;
+    max-height: 240px !important;
+}
 .gallery-page .gallery-controls, .diary-page .diary-filters, .timeline-page .timeline-top { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
 .gallery-grid, .card-grid, .timeline-list, .badge-grid, .diary-list { display: grid; gap: 22px; }
+.chart-grid canvas {
+    width: 100% !important;
+    height: 240px !important;
+}
 .gallery-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .gallery-item { position: relative; overflow: hidden; border-radius: 24px; cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); }
 .gallery-item img { width: 100%; height: 220px; object-fit: cover; display: block; }

@@ -111,7 +111,7 @@ function updateHomeSummary(summary) {
     document.getElementById('homeStatusLabel').textContent = summary.status;
     document.getElementById('homeStatusText').textContent = summary.status === 'In movimento' ? 'Tracker attivo e aggiornato.' : 'Dati disponibili, attesa prossima posizione.';
 }
-function createChart(canvasId, label, data, color, yAxisLabel = '') {
+function createChart(canvasId, label, data, color, yAxisLabel = '', xMin = undefined, xMax = undefined) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
     if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
@@ -131,11 +131,17 @@ function createChart(canvasId, label, data, color, yAxisLabel = '') {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
                 x: {
                     type: 'linear',
                     display: true,
+                    min: xMin,
+                    max: xMax,
+                    ticks: {
+                        callback: value => Number(value).toFixed(0)
+                    },
                     title: { display: true, text: 'Km' }
                 },
                 y: {
@@ -195,6 +201,20 @@ function computeEstimatedSteps(totalDistanceKm, durationSeconds) {
     const fatigueGain = Math.min(hours * 0.03, 0.35);
     const stepsPerKm = 1420 * (1 + fatigueGain);
     return Math.round(distance * stepsPerKm);
+}
+
+function stretchSeriesToRange(series, xMin, xMax, fallbackY = 0) {
+    const clean = Array.isArray(series) ? series.filter(p => Number.isFinite(p?.x) && Number.isFinite(p?.y)) : [];
+    if (!clean.length) {
+        return [{ x: xMin, y: fallbackY }, { x: xMax, y: fallbackY }];
+    }
+    const sorted = [...clean].sort((a, b) => a.x - b.x);
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    const stretched = [...sorted];
+    if (first.x > xMin) stretched.unshift({ x: xMin, y: first.y });
+    if (last.x < xMax) stretched.push({ x: xMax, y: last.y });
+    return stretched.map(p => ({ x: Math.max(xMin, Math.min(xMax, p.x)), y: p.y }));
 }
 
 function parseGpxXml(gpxText) {
@@ -491,22 +511,93 @@ async function initHomePage() {
     const summary = buildSummary(points);
     if (summary) updateHomeSummary(summary);
 }
-function buildChartData(points) {
-    const safePoints = points.filter(p => p && p.velocita && p.altitudine && p.distanza && p.orario);
+function buildChartData(points, summaryContext = null) {
+    const safePoints = points
+        .filter(p => p && p.velocita && p.altitudine && p.distanza && p.orario)
+        .sort((a, b) => new Date(a.orario).getTime() - new Date(b.orario).getTime());
+    const rawKm = safePoints.map(p => Number(p.distanza.km ?? 0));
+    const kmMin = rawKm.length ? Math.min(...rawKm) : 0;
+    const kmMax = rawKm.length ? Math.max(...rawKm) : 0;
+    const sortedKm = [...rawKm].sort((a, b) => a - b);
+    const kmP80 = sortedKm.length ? sortedKm[Math.floor(sortedKm.length * 0.8)] : 0;
+    const uniqueKmCount = new Set(rawKm.map(v => Number(v.toFixed(2)))).size;
+    const nonZeroKmRatio = rawKm.length ? (rawKm.filter(v => v > 0).length / rawKm.length) : 0;
+    const hasUsableKmSpread = Number.isFinite(kmMin)
+        && Number.isFinite(kmMax)
+        && (kmMax - kmMin) > 0.1
+        && uniqueKmCount > Math.max(6, Math.floor(rawKm.length * 0.2))
+        && nonZeroKmRatio > 0.45
+        && kmP80 > (kmMin + (kmMax - kmMin) * 0.2);
+    const fallbackTotalKm = Math.max(
+        0,
+        Number(summaryContext?.totalDistance ?? points[points.length - 1]?.distanza?.km ?? safePoints[safePoints.length - 1]?.distanza?.km ?? 0)
+    );
+    const kmByIndex = safePoints.map((point, index) => (hasUsableKmSpread
+        ? Number(point.distanza.km ?? 0)
+        : (safePoints.length > 1 ? (fallbackTotalKm * index) / (safePoints.length - 1) : 0)));
+    const timeByIndex = safePoints.map(point => new Date(point.orario).getTime());
+    const summaryDurationHours = Number(summaryContext?.duration ?? 0) / 3600;
+    const globalAvgSpeed = summaryDurationHours > 0 ? (fallbackTotalKm / summaryDurationHours) : null;
+    const maxReasonableSpeed = Number.isFinite(globalAvgSpeed) && globalAvgSpeed > 0
+        ? Math.max(8, globalAvgSpeed * 2.5)
+        : 12;
+    const segmentSpeed = safePoints.map(() => null);
+    for (let i = 1; i < safePoints.length; i += 1) {
+        const dtMs = timeByIndex[i] - timeByIndex[i - 1];
+        const dk = kmByIndex[i] - kmByIndex[i - 1];
+        if (!Number.isFinite(dtMs) || dtMs <= 0 || !Number.isFinite(dk) || dk < 0) continue;
+        const speed = dk / (dtMs / 3600000);
+        if (Number.isFinite(speed) && speed >= 0 && speed <= maxReasonableSpeed) {
+            segmentSpeed[i] = speed;
+        }
+    }
+    const validSegmentSpeed = segmentSpeed.filter(v => Number.isFinite(v));
+    const percentile = (values, q) => {
+        if (!values.length) return 0;
+        const sorted = [...values].sort((a, b) => a - b);
+        const idx = Math.max(0, Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * q)));
+        return sorted[idx];
+    };
+    const derivedSpeedReliable = validSegmentSpeed.length >= Math.max(4, Math.floor(safePoints.length * 0.15));
+    const speedCap = derivedSpeedReliable ? Math.min(maxReasonableSpeed, Math.max(8, percentile(validSegmentSpeed, 0.95) * 1.8)) : maxReasonableSpeed;
+    const rawSpeedSeries = safePoints.map((point, index) => {
+        if (derivedSpeedReliable) {
+            const derived = segmentSpeed[index];
+            if (Number.isFinite(derived)) return Math.min(derived, speedCap);
+        }
+        const reportedSpeed = Number(point.velocita.km_h ?? 0);
+        if (Number.isFinite(reportedSpeed) && reportedSpeed > 0.1) {
+            return Math.min(reportedSpeed, maxReasonableSpeed);
+        }
+        return Number.isFinite(globalAvgSpeed) && globalAvgSpeed > 0 ? globalAvgSpeed : 0;
+    });
+    const smoothNumericSeries = (values, radius = 2) => values.map((_, index) => {
+        let sum = 0;
+        let count = 0;
+        for (let j = Math.max(0, index - radius); j <= Math.min(values.length - 1, index + radius); j += 1) {
+            const value = values[j];
+            if (Number.isFinite(value)) {
+                sum += value;
+                count += 1;
+            }
+        }
+        return count ? (sum / count) : null;
+    });
+    const smoothedSpeedSeries = smoothNumericSeries(rawSpeedSeries, 2);
     let cumulativeElevation = 0;
     const speedSeries = [];
     const altitudeSeries = [];
     const elevationSeries = [];
     const kmSeries = [];
     safePoints.forEach((point, index) => {
-        const km = Number(point.distanza.km ?? 0);
+        const km = kmByIndex[index];
         const altitude = Number(point.altitudine.metri ?? 0);
-        const speed = Number(point.velocita.km_h ?? 0);
+        const speed = Number.isFinite(smoothedSpeedSeries[index]) ? smoothedSpeedSeries[index] : 0;
         if (index > 0) {
             const prevAlt = Number(safePoints[index - 1].altitudine.metri ?? 0);
             cumulativeElevation += Math.max(0, altitude - prevAlt);
         }
-        speedSeries.push({ x: km, y: speed });
+        speedSeries.push({ x: km, y: Number(speed.toFixed(2)) });
         altitudeSeries.push({ x: km, y: altitude });
         elevationSeries.push({ x: km, y: cumulativeElevation });
         kmSeries.push({ x: km, y: km });
@@ -546,11 +637,20 @@ async function initDashboardPage() {
     if (metricAltitude) metricAltitude.textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
     if (metricElevation) metricElevation.textContent = `${Math.round(summary.elevationGain)} m`;
     if (metricTime) metricTime.textContent = formatTime(summary.duration);
-    const chartData = buildChartData(points.length ? points : [{ velocita: { km_h: 0 }, altitudine: { metri: 0 }, distanza: { km: 0 }, orario: new Date().toISOString() }]);
-    createChart('chartSpeed', 'Velocità', chartData.speedSeries, '#49a8ff', 'Km/h');
-    createChart('chartAltitude', 'Altitudine', chartData.altitudeSeries, '#7f7dff', 'm');
-    createChart('chartKm', 'Km cumulati', chartData.kmSeries, '#5dd97d', 'Km');
-    createChart('chartElevation', 'Dislivello cumulato', chartData.elevationSeries, '#f3c03d', 'm');
+    const xAxisMin = 0;
+    const xAxisMax = summary.totalDistance > 0 ? summary.totalDistance : 1;
+    const chartData = buildChartData(
+        points.length ? points : [{ velocita: { km_h: 0 }, altitudine: { metri: 0 }, distanza: { km: 0 }, orario: new Date().toISOString() }],
+        summary
+    );
+    const speedSeries = stretchSeriesToRange(chartData.speedSeries, xAxisMin, xAxisMax, 0);
+    const altitudeSeries = stretchSeriesToRange(chartData.altitudeSeries, xAxisMin, xAxisMax, 0);
+    const elevationSeries = stretchSeriesToRange(chartData.elevationSeries, xAxisMin, xAxisMax, 0);
+    const kmSeries = [{ x: xAxisMin, y: xAxisMin }, { x: xAxisMax, y: xAxisMax }];
+    createChart('chartSpeed', 'Velocità', speedSeries, '#49a8ff', 'Km/h', xAxisMin, xAxisMax);
+    createChart('chartAltitude', 'Altitudine', altitudeSeries, '#7f7dff', 'm', xAxisMin, xAxisMax);
+    createChart('chartKm', 'Km cumulati', kmSeries, '#5dd97d', 'Km', xAxisMin, xAxisMax);
+    createChart('chartElevation', 'Dislivello cumulato', elevationSeries, '#f3c03d', 'm', xAxisMin, xAxisMax);
 }
 async function initGalleryPage() {
     initializeTheme();
