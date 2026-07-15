@@ -13,6 +13,7 @@ let gpxTotalKm = null;
 let gpxCoords = [];
 let gpxLoadPromise = null;
 let latestLiveCoord = null;
+let latestVisitorCoord = null;
 function getTileProviders() {
     if (typeof L === 'undefined') return {};
     return {
@@ -193,16 +194,20 @@ function centerOnLatestLive() {
     mapInstance.setView(latestLiveCoord, Math.max(mapInstance.getZoom(), 14));
 }
 
-function openGoogleDirectionsToFinish(originLatLng) {
-    if (!originLatLng || !gpxCoords.length) {
-        alert('Percorso GPX non ancora caricato.');
+function centerOnVisitorPosition() {
+    if (!mapInstance || !latestVisitorCoord) return;
+    mapInstance.setView(latestVisitorCoord, Math.max(mapInstance.getZoom(), 14));
+}
+
+function openGoogleDirectionsUserToRunner() {
+    if (!latestVisitorCoord || !latestLiveCoord) {
+        alert('Posizione utente o corridore non disponibile.');
         return;
     }
-    const dest = gpxCoords[gpxCoords.length - 1];
-    const originLat = Number(originLatLng.lat).toFixed(6);
-    const originLng = Number(originLatLng.lng).toFixed(6);
-    const destLat = Number(dest.lat).toFixed(6);
-    const destLng = Number(dest.lng).toFixed(6);
+    const originLat = Number(latestVisitorCoord.lat).toFixed(6);
+    const originLng = Number(latestVisitorCoord.lng).toFixed(6);
+    const destLat = Number(latestLiveCoord[0]).toFixed(6);
+    const destLng = Number(latestLiveCoord[1]).toFixed(6);
     const url = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=walking`;
     window.open(url, '_blank', 'noopener,noreferrer');
 }
@@ -340,8 +345,7 @@ function refreshMapRoute(points) {
     if (!liveMarker) {
         liveMarker = L.circleMarker(coords[coords.length - 1], { radius: 10, fillColor: '#49a8ff', color: '#fff', weight: 2, fillOpacity: 0.95 }).addTo(mapInstance);
         liveMarker.on('click', () => {
-            const ll = liveMarker.getLatLng();
-            openGoogleDirectionsToFinish(ll);
+            openGoogleDirectionsUserToRunner();
         });
     } else {
         liveMarker.setLatLng(coords[coords.length - 1]);
@@ -372,6 +376,7 @@ function updateVisitorDistance(lastPoint) {
         return;
     }
     navigator.geolocation.getCurrentPosition(position => {
+        showVisitorMarker(position);
         const R = 6371e3;
         const toRad = deg => deg * Math.PI / 180;
         const lat1 = toRad(position.coords.latitude);
@@ -404,6 +409,10 @@ async function initLivePage() {
     if (centerBtn) {
         centerBtn.addEventListener('click', centerOnLatestLive);
     }
+    const centerUserBtn = document.getElementById('centerUserBtn');
+    if (centerUserBtn) {
+        centerUserBtn.addEventListener('click', centerOnVisitorPosition);
+    }
 
     const fullscreenBtn = document.getElementById('mapFullscreenBtn');
     const mapWrap = document.querySelector('.map-wrap');
@@ -420,7 +429,10 @@ async function initLivePage() {
         const points = await fetchPoints();
         const summary = buildSummary(points);
         updateLiveUI(summary);
-        if (summary) refreshMapRoute(summary.points);
+        if (summary) {
+            refreshMapRoute(summary.points);
+            updateVisitorDistance(summary.lastPoint);
+        }
     }, 8000);
 }
 async function initHomePage() {
@@ -608,9 +620,9 @@ async function initProgressPage() {
 function showVisitorMarker(position) {
     if (!mapInstance || !position) return;
     const coords = [position.coords.latitude, position.coords.longitude];
+    latestVisitorCoord = L.latLng(coords[0], coords[1]);
     if (visitorMarker) visitorMarker.setLatLng(coords);
-    else visitorMarker = L.marker(coords, { icon: L.divIcon({ className: 'visitor-icon', html: '<span>📍</span>', iconSize: [32, 32] }) }).addTo(mapInstance).bindPopup('La tua posizione');
-    mapInstance.panTo(coords);
+    else visitorMarker = L.marker(coords, { icon: L.divIcon({ className: 'visitor-icon', html: '<span class="user-location-icon" aria-hidden="true"></span>', iconSize: [24, 24], iconAnchor: [12, 12] }) }).addTo(mapInstance).bindPopup('La tua posizione');
 }
 function initPage() {
     const page = document.body.dataset.page;
