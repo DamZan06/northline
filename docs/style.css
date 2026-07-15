@@ -52,6 +52,34 @@ img { max-width: 100%; display: block; }
 .hero-stats-grid span, .metric-card span, .weather-card span, .timeline-event time { color: var(--muted); font-size: 0.93rem; }
 .hero-stats-grid strong, .metric-card strong { display: block; margin-top: 12px; font-size: 1.7rem; }
 .section-title { display: grid; gap: 10px; }
+.chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.chart-axis-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+.chart-axis-control select {
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    outline: none;
+}
+.chart-axis-control select:focus-visible {
+    border-color: rgba(73, 168, 255, 0.7);
+    box-shadow: 0 0 0 2px rgba(73, 168, 255, 0.25);
+}
 .section-title h2 { margin: 0; font-size: clamp(2rem, 3vw, 2.8rem); }
 .section-title p { color: var(--muted); line-height: 1.8; }
 .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

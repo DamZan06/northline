@@ -111,9 +111,22 @@ function updateHomeSummary(summary) {
     document.getElementById('homeStatusLabel').textContent = summary.status;
     document.getElementById('homeStatusText').textContent = summary.status === 'In movimento' ? 'Tracker attivo e aggiornato.' : 'Dati disponibili, attesa prossima posizione.';
 }
-function createChart(canvasId, label, data, color, yAxisLabel = '', xMin = undefined, xMax = undefined) {
+function formatHoursTick(hoursValue) {
+    const totalMinutes = Math.max(0, Math.round((Number(hoursValue) || 0) * 60));
+    const hh = Math.floor(totalMinutes / 60);
+    const mm = totalMinutes % 60;
+    return `${hh}h ${String(mm).padStart(2, '0')}m`;
+}
+
+function createChart(canvasId, label, data, color, yAxisLabel = '', xAxisConfig = {}) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return null;
+    const axis = {
+        min: xAxisConfig.min,
+        max: xAxisConfig.max,
+        label: xAxisConfig.label || 'Km',
+        tickCallback: xAxisConfig.tickCallback || (value => Number(value).toFixed(0))
+    };
     if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
     chartInstances[canvasId] = new Chart(ctx, {
         type: 'line',
@@ -137,12 +150,12 @@ function createChart(canvasId, label, data, color, yAxisLabel = '', xMin = undef
                 x: {
                     type: 'linear',
                     display: true,
-                    min: xMin,
-                    max: xMax,
+                    min: axis.min,
+                    max: axis.max,
                     ticks: {
-                        callback: value => Number(value).toFixed(0)
+                        callback: axis.tickCallback
                     },
-                    title: { display: true, text: 'Km' }
+                    title: { display: true, text: axis.label }
                 },
                 y: {
                     display: true,
@@ -536,6 +549,7 @@ function buildChartData(points, summaryContext = null) {
         ? Number(point.distanza.km ?? 0)
         : (safePoints.length > 1 ? (fallbackTotalKm * index) / (safePoints.length - 1) : 0)));
     const timeByIndex = safePoints.map(point => new Date(point.orario).getTime());
+    const validStartTs = timeByIndex.find(ts => Number.isFinite(ts));
     const summaryDurationHours = Number(summaryContext?.duration ?? 0) / 3600;
     const globalAvgSpeed = summaryDurationHours > 0 ? (fallbackTotalKm / summaryDurationHours) : null;
     const maxReasonableSpeed = Number.isFinite(globalAvgSpeed) && globalAvgSpeed > 0
@@ -584,29 +598,37 @@ function buildChartData(points, summaryContext = null) {
         return count ? (sum / count) : null;
     });
     const smoothedSpeedSeries = smoothNumericSeries(rawSpeedSeries, 2);
+    const fallbackDurationHours = Math.max(0, Number(summaryContext?.duration ?? 0) / 3600);
     let cumulativeElevation = 0;
     const speedSeries = [];
     const altitudeSeries = [];
     const elevationSeries = [];
     const kmSeries = [];
+    let maxTimeHours = 0;
     safePoints.forEach((point, index) => {
         const km = kmByIndex[index];
+        const absoluteTs = timeByIndex[index];
+        const timeHours = (Number.isFinite(validStartTs) && Number.isFinite(absoluteTs) && absoluteTs >= validStartTs)
+            ? (absoluteTs - validStartTs) / 3600000
+            : (safePoints.length > 1 ? (fallbackDurationHours * index) / (safePoints.length - 1) : 0);
         const altitude = Number(point.altitudine.metri ?? 0);
         const speed = Number.isFinite(smoothedSpeedSeries[index]) ? smoothedSpeedSeries[index] : 0;
+        maxTimeHours = Math.max(maxTimeHours, timeHours);
         if (index > 0) {
             const prevAlt = Number(safePoints[index - 1].altitudine.metri ?? 0);
             cumulativeElevation += Math.max(0, altitude - prevAlt);
         }
-        speedSeries.push({ x: km, y: Number(speed.toFixed(2)) });
-        altitudeSeries.push({ x: km, y: altitude });
-        elevationSeries.push({ x: km, y: cumulativeElevation });
-        kmSeries.push({ x: km, y: km });
+        speedSeries.push({ km, t: timeHours, y: Number(speed.toFixed(2)) });
+        altitudeSeries.push({ km, t: timeHours, y: altitude });
+        elevationSeries.push({ km, t: timeHours, y: cumulativeElevation });
+        kmSeries.push({ km, t: timeHours, y: km });
     });
     return {
         speedSeries,
         altitudeSeries,
         elevationSeries,
         kmSeries,
+        maxTimeHours,
         dailyLabels: [...new Set(safePoints.map(p => new Date(p.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })))] ,
         kmDaily: safePoints.reduce((acc, point) => {
             const day = new Date(point.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
@@ -637,20 +659,43 @@ async function initDashboardPage() {
     if (metricAltitude) metricAltitude.textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
     if (metricElevation) metricElevation.textContent = `${Math.round(summary.elevationGain)} m`;
     if (metricTime) metricTime.textContent = formatTime(summary.duration);
-    const xAxisMin = 0;
-    const xAxisMax = summary.totalDistance > 0 ? summary.totalDistance : 1;
+    const xAxisSelect = document.getElementById('chartXAxisMode');
+    const storedXAxisMode = localStorage.getItem('northline-chart-x-axis');
+    const xAxisMode = storedXAxisMode === 'time' ? 'time' : 'distance';
+    if (xAxisSelect) xAxisSelect.value = xAxisMode;
     const chartData = buildChartData(
         points.length ? points : [{ velocita: { km_h: 0 }, altitudine: { metri: 0 }, distanza: { km: 0 }, orario: new Date().toISOString() }],
         summary
     );
-    const speedSeries = stretchSeriesToRange(chartData.speedSeries, xAxisMin, xAxisMax, 0);
-    const altitudeSeries = stretchSeriesToRange(chartData.altitudeSeries, xAxisMin, xAxisMax, 0);
-    const elevationSeries = stretchSeriesToRange(chartData.elevationSeries, xAxisMin, xAxisMax, 0);
-    const kmSeries = [{ x: xAxisMin, y: xAxisMin }, { x: xAxisMax, y: xAxisMax }];
-    createChart('chartSpeed', 'Velocità', speedSeries, '#49a8ff', 'Km/h', xAxisMin, xAxisMax);
-    createChart('chartAltitude', 'Altitudine', altitudeSeries, '#7f7dff', 'm', xAxisMin, xAxisMax);
-    createChart('chartKm', 'Km cumulati', kmSeries, '#5dd97d', 'Km', xAxisMin, xAxisMax);
-    createChart('chartElevation', 'Dislivello cumulato', elevationSeries, '#f3c03d', 'm', xAxisMin, xAxisMax);
+
+    const renderCharts = axisMode => {
+        const mode = axisMode === 'time' ? 'time' : 'distance';
+        const xMin = 0;
+        const xMax = mode === 'time'
+            ? Math.max(1, chartData.maxTimeHours || Number(summary.duration || 0) / 3600 || 0)
+            : Math.max(1, summary.totalDistance || 0);
+        const toAxisSeries = series => series.map(p => ({ x: mode === 'time' ? p.t : p.km, y: p.y }));
+        const speedSeries = stretchSeriesToRange(toAxisSeries(chartData.speedSeries), xMin, xMax, 0);
+        const altitudeSeries = stretchSeriesToRange(toAxisSeries(chartData.altitudeSeries), xMin, xMax, 0);
+        const elevationSeries = stretchSeriesToRange(toAxisSeries(chartData.elevationSeries), xMin, xMax, 0);
+        const kmSeries = stretchSeriesToRange(toAxisSeries(chartData.kmSeries), xMin, xMax, 0);
+        const axisConfig = mode === 'time'
+            ? { min: xMin, max: xMax, label: 'Tempo', tickCallback: value => formatHoursTick(value) }
+            : { min: xMin, max: xMax, label: 'Km', tickCallback: value => Number(value).toFixed(0) };
+        createChart('chartSpeed', 'Velocità', speedSeries, '#49a8ff', 'Km/h', axisConfig);
+        createChart('chartAltitude', 'Altitudine', altitudeSeries, '#7f7dff', 'm', axisConfig);
+        createChart('chartKm', 'Km cumulati', kmSeries, '#5dd97d', 'Km', axisConfig);
+        createChart('chartElevation', 'Dislivello cumulato', elevationSeries, '#f3c03d', 'm', axisConfig);
+    };
+
+    renderCharts(xAxisMode);
+    if (xAxisSelect) {
+        xAxisSelect.addEventListener('change', event => {
+            const mode = event.target.value === 'time' ? 'time' : 'distance';
+            localStorage.setItem('northline-chart-x-axis', mode);
+            renderCharts(mode);
+        });
+    }
 }
 async function initGalleryPage() {
     initializeTheme();

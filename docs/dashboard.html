@@ -10,24 +10,24 @@
     <meta property="og:description" content="Statistiche live e grafici dell'avventura NorthLine.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://damzan06.github.io/northline/dashboard.html">
-    <meta property="og:image" content="https://damzan06.github.io/northline/assets/social-card.png?v=20260715n">
-    <meta property="og:image:secure_url" content="https://damzan06.github.io/northline/assets/social-card.png?v=20260715n">
+    <meta property="og:image" content="https://damzan06.github.io/northline/assets/preview.png?v=20260715p">
+    <meta property="og:image:secure_url" content="https://damzan06.github.io/northline/assets/preview.png?v=20260715p">
     <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:image:width" content="1254">
+    <meta property="og:image:height" content="1254">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="NorthLine – Dashboard">
     <meta name="twitter:description" content="Statistiche live e grafici dell'avventura NorthLine.">
-    <meta name="twitter:image" content="https://damzan06.github.io/northline/assets/social-card.png?v=20260715n">
-    <link rel="stylesheet" href="style.css?v=20260715m">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260715n">
-    <link rel="icon" type="image/png" href="assets/favicon-v2.png?v=20260715n">
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260715n">
+    <meta name="twitter:image" content="https://damzan06.github.io/northline/assets/preview.png?v=20260715p">
+    <link rel="stylesheet" href="style.css?v=20260715p">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260715q">
+    <link rel="icon" type="image/png" href="assets/favicon-v2.png?v=20260715q">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260715q">
 </head>
 <body data-page="dashboard">
     <header class="topbar">
         <div class="brand">
-            <img src="assets/favicon-v2.png?v=20260715n" alt="Logo NorthLine" class="brand-icon">
+            <img src="assets/favicon-v2.png?v=20260715q" alt="Logo NorthLine" class="brand-icon">
             <div>
                 <span class="brand-title">NorthLine</span>
                 <span class="brand-subtitle">Dashboard</span>
@@ -88,8 +88,15 @@
             </div>
         </section>
         <section class="section section-white">
-            <div class="section-title">
+            <div class="section-title chart-header">
                 <h2>Grafici live</h2>
+                <label class="chart-axis-control" for="chartXAxisMode">
+                    Asse X
+                    <select id="chartXAxisMode" aria-label="Seleziona asse X grafici">
+                        <option value="distance">Km</option>
+                        <option value="time">Tempo</option>
+                    </select>
+                </label>
             </div>
             <div class="chart-grid">
                 <article class="metric-card"><h3>Velocità</h3><canvas id="chartSpeed"></canvas></article>
@@ -100,7 +107,9 @@
         </section>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js?v=20260715o"></script>
+    <script src="script.js?v=20260715p"></script>
 </body>
 </html>
+
+
 
