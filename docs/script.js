@@ -95,8 +95,10 @@ function updateHomeSummary(summary) {
     if (!summary) return;
     document.getElementById('homeDistance').textContent = summary.totalDistance.toFixed(1);
     const blended = computeBlendedRemaining(summary);
-    document.getElementById('homeRemaining').textContent = (blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance)).toFixed(1);
-    document.getElementById('homeCompletion').textContent = `${summary.progress.toFixed(1)}%`;
+    const remaining = blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
+    const completion = computeDynamicProgress(summary.totalDistance, remaining);
+    document.getElementById('homeRemaining').textContent = remaining.toFixed(1);
+    document.getElementById('homeCompletion').textContent = `${completion.toFixed(1)}%`;
     document.getElementById('homeTime').textContent = formatTime(summary.duration);
     document.getElementById('homeGain').textContent = Math.round(summary.elevationGain);
     document.getElementById('homeSteps').textContent = Math.round(summary.totalDistance * 1420).toLocaleString();
@@ -145,6 +147,14 @@ function computeBlendedRemaining(summary) {
     const weightGpx = 1 - progressFrac;
     const blended = weightGpx * remainingGpx + (1 - weightGpx) * remainingLive;
     return Math.max(0, blended);
+}
+
+function computeDynamicProgress(totalDistance, remainingDistance) {
+    const done = Math.max(0, Number(totalDistance) || 0);
+    const remaining = Math.max(0, Number(remainingDistance) || 0);
+    const dynamicTotal = done + remaining;
+    if (dynamicTotal <= 0) return 0;
+    return Math.min((done / dynamicTotal) * 100, 100);
 }
 
 function parseGpxXml(gpxText) {
@@ -358,16 +368,18 @@ function updateLiveUI(summary) {
     if (!summary) return;
     document.getElementById('distance').textContent = `${summary.totalDistance.toFixed(1)} km`;
     const blendedRemaining = computeBlendedRemaining(summary);
-    document.getElementById('remaining').textContent = `${(blendedRemaining !== null ? blendedRemaining : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance)).toFixed(1)} km`;
-    document.getElementById('completion').textContent = `${summary.progress.toFixed(1)}%`;
-    document.getElementById('completionText').textContent = `${summary.progress.toFixed(1)}%`;
+    const remaining = blendedRemaining !== null ? blendedRemaining : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
+    const completion = computeDynamicProgress(summary.totalDistance, remaining);
+    document.getElementById('remaining').textContent = `${remaining.toFixed(1)} km`;
+    document.getElementById('completion').textContent = `${completion.toFixed(1)}%`;
+    document.getElementById('completionText').textContent = `${completion.toFixed(1)}%`;
     document.getElementById('speed').textContent = `${summary.speed.toFixed(1)} km/h`;
     document.getElementById('altitude').textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
     document.getElementById('lastUpdate').textContent = formatRelativeDate(summary.lastPoint.orario);
     document.getElementById('time').textContent = formatTime(summary.duration);
     document.getElementById('elevation').textContent = `${Math.round(summary.elevationGain)} m`;
     document.getElementById('steps').textContent = Math.round(summary.totalDistance * 1420).toLocaleString();
-    document.getElementById('progressBar').style.width = `${summary.progress.toFixed(1)}%`;
+    document.getElementById('progressBar').style.width = `${completion.toFixed(1)}%`;
 }
 
 function updateVisitorDistance(lastPoint) {
@@ -471,8 +483,10 @@ async function initDashboardPage() {
     const metricTime = document.getElementById('metricTime');
     if (metricDistance) metricDistance.textContent = `${summary.totalDistance.toFixed(1)} km`;
     const blended = computeBlendedRemaining(summary);
-    if (metricRemaining) metricRemaining.textContent = `${(blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance)).toFixed(1)} km`;
-    if (metricCompletion) metricCompletion.textContent = `${summary.progress.toFixed(1)}%`;
+    const remaining = blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
+    const completion = computeDynamicProgress(summary.totalDistance, remaining);
+    if (metricRemaining) metricRemaining.textContent = `${remaining.toFixed(1)} km`;
+    if (metricCompletion) metricCompletion.textContent = `${completion.toFixed(1)}%`;
     if (metricSpeed) metricSpeed.textContent = `${summary.speed.toFixed(1)} km/h`;
     if (metricAltitude) metricAltitude.textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
     if (metricElevation) metricElevation.textContent = `${Math.round(summary.elevationGain)} m`;
