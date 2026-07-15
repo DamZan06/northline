@@ -283,7 +283,8 @@ function refreshMapRoute(points) {
 function updateLiveUI(summary) {
     if (!summary) return;
     document.getElementById('distance').textContent = `${summary.totalDistance.toFixed(1)} km`;
-    document.getElementById('remaining').textContent = `${Math.max(0, (gpxTotalKm || 290) - summary.totalDistance).toFixed(1)} km`;
+    const blendedRemaining = computeBlendedRemaining(summary);
+    document.getElementById('remaining').textContent = `${(blendedRemaining !== null ? blendedRemaining : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance)).toFixed(1)} km`;
     document.getElementById('completion').textContent = `${summary.progress.toFixed(1)}%`;
     document.getElementById('completionText').textContent = `${summary.progress.toFixed(1)}%`;
     document.getElementById('speed').textContent = `${summary.speed.toFixed(1)} km/h`;
@@ -294,6 +295,17 @@ function updateLiveUI(summary) {
     document.getElementById('steps').textContent = Math.round(summary.totalDistance * 1420).toLocaleString();
     document.getElementById('progressBar').style.width = `${summary.progress.toFixed(1)}%`;
 }
+
+// Auto-init based on body data-page
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const page = document.body?.dataset?.page || '';
+        if (page === 'live') initLivePage();
+        else if (page === 'dashboard') initDashboardPage();
+        else if (page === 'home') initHomePage();
+        else if (page === 'gallery') initGalleryPage();
+    } catch (err) { console.warn('Init error', err); }
+});
 function updateVisitorDistance(lastPoint) {
     if (!navigator.geolocation) {
         document.getElementById('visitorDistance').textContent = 'Non supportato';
