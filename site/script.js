@@ -12,14 +12,45 @@ const map = L.map("map", {
 })
 .setView([46.0, 8.9], 13);
 
+let activeTileLayer = null;
 
-L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-        attribution: "© OpenStreetMap"
+function setMapStyle(style) {
+    if (activeTileLayer) {
+        map.removeLayer(activeTileLayer);
     }
-)
-.addTo(map);
+
+    const tiles = {
+        osm: {
+            url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            attribution: "© OpenStreetMap"
+        },
+        sat: {
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            attribution: "© Esri, Maxar, Earthstar Geographics"
+        },
+        topo: {
+            url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+            attribution: "© OpenTopoMap"
+        }
+    };
+
+    const config = tiles[style] || tiles.osm;
+
+    activeTileLayer = L.tileLayer(config.url, {
+        attribution: config.attribution,
+        maxZoom: 19
+    }).addTo(map);
+}
+
+setMapStyle("osm");
+
+document.querySelectorAll(".map-style-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+        document.querySelectorAll(".map-style-btn").forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+        setMapStyle(button.dataset.style);
+    });
+});
 
 
 // ----------------
@@ -29,6 +60,11 @@ L.tileLayer(
 let garminLine = null;
 let startMarker = null;
 let liveMarker = null;
+let gpxLayer = null;
+let gpxRouteLine = null;
+let finishMarker = null;
+let gpxTrackPoints = [];
+let gpxTrackLength = null;
 
 let firstLoad = true;
 
@@ -181,11 +217,44 @@ async function loadTrack() {
     // ----------------
 
 
+    let completedDistance = lastPoint.distanza.km;
+    let remainingDistance = null;
+
+    if (northLineDistance && gpxTrackPoints.length) {
+        const livePosition = [lastPoint.coordinate.lat, lastPoint.coordinate.lon];
+        const routePoint = findClosestPointOnRoute(livePosition);
+
+        if (routePoint) {
+            const progressDistance = routePoint.distanceAlongRoute / 1000;
+            const totalRouteDistance = northLineDistance;
+            const remainingFromLive = Math.max(0, totalRouteDistance - progressDistance);
+            const trackerRemaining = Math.max(0, totalRouteDistance - completedDistance);
+            const progressRatio = Math.min(1, Math.max(0, completedDistance / totalRouteDistance));
+            const trackerWeight = Math.max(0.2, 0.9 - progressRatio * 0.7);
+            const liveWeight = 1 - trackerWeight;
+
+            let mixedRemaining = trackerWeight * trackerRemaining + liveWeight * remainingFromLive;
+
+            if (progressRatio < 0.6) {
+                mixedRemaining += 1.5;
+            } else {
+                mixedRemaining -= Math.min(2.2, (progressRatio - 0.6) * 3.2);
+            }
+
+            remainingDistance = Math.max(0, mixedRemaining);
+        }
+    }
+
     document.getElementById("distance").innerHTML =
-        lastPoint.distanza.km.toFixed(2)
+        completedDistance.toFixed(2)
         + " / "
         + (northLineDistance ? northLineDistance.toFixed(1) : "-")
         + " km";
+
+    const remainingElement = document.getElementById("remaining");
+    if (remainingElement) {
+        remainingElement.innerHTML = remainingDistance !== null ? remainingDistance.toFixed(1) + " km" : "--";
+    }
 
 
     const seconds =
@@ -264,6 +333,21 @@ async function loadTrack() {
         ]
     );
 
+    if (gpxRouteLine) {
+        map.removeLayer(gpxRouteLine);
+    }
+
+    if (gpxTrackPoints.length) {
+        gpxRouteLine = L.polyline(
+            gpxTrackPoints.map((point) => [point.lat, point.lng]),
+            {
+                color: "#d64545",
+                weight: 4,
+                opacity: 0.9
+            }
+        ).addTo(map);
+    }
+
 
 
 
@@ -320,15 +404,13 @@ async function loadTrack() {
 
 
     if (firstLoad) {
+        const initialBounds = gpxRouteLine && gpxRouteLine.getBounds
+            ? gpxRouteLine.getBounds()
+            : garminLine.getBounds();
 
-
-        map.fitBounds(
-            garminLine.getBounds()
-        );
-
+        map.fitBounds(initialBounds);
 
         firstLoad = false;
-
     }
 
 
@@ -340,72 +422,124 @@ async function loadTrack() {
 
 
 
+function haversineDistance(a, b) {
+    const toRad = (value) => value * Math.PI / 180;
+    const dLat = toRad(b[0] - a[0]);
+    const dLng = toRad(b[1] - a[1]);
+    const lat1 = toRad(a[0]);
+    const lat2 = toRad(b[0]);
+    const sinLat = Math.sin(dLat / 2);
+    const sinLng = Math.sin(dLng / 2);
+    const h = sinLat * sinLat + sinLng * sinLng * Math.cos(lat1) * Math.cos(lat2);
+    return 2 * 6371000 * Math.asin(Math.sqrt(h));
+}
+
+function findClosestPointOnRoute(position) {
+    if (!gpxTrackPoints.length) {
+        return null;
+    }
+
+    let bestPoint = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    for (let i = 0; i < gpxTrackPoints.length; i += 1) {
+        const point = gpxTrackPoints[i];
+        const candidate = haversineDistance(position, [point.lat, point.lng]);
+        if (candidate < bestDistance) {
+            bestDistance = candidate;
+            bestPoint = point;
+        }
+    }
+
+    if (!bestPoint) {
+        return null;
+    }
+
+    let accumulatedDistance = 0;
+    let previous = null;
+
+    for (let i = 0; i < gpxTrackPoints.length; i += 1) {
+        const current = gpxTrackPoints[i];
+        if (!previous) {
+            previous = current;
+            continue;
+        }
+
+        const segmentDistance = haversineDistance([previous.lat, previous.lng], [current.lat, current.lng]);
+        if (current === bestPoint) {
+            accumulatedDistance += segmentDistance;
+            break;
+        }
+
+        accumulatedDistance += segmentDistance;
+        previous = current;
+    }
+
+    return {
+        distanceAlongRoute: accumulatedDistance,
+        point: bestPoint
+    };
+}
+
 // ----------------
 // GPX NORTH LINE
 // ----------------
 
 function loadGPX() {
-
-
-    new L.GPX(
+    const gpxLayerInstance = new L.GPX(
         "NorthLine_3.gpx",
         {
-
             async: true,
-
-
             marker_options: {
-
                 startIcon: new L.Icon.Default(),
-
                 endIcon: L.icon({
-
-                    iconUrl:"finish-flag.gif",
-
-                    iconSize:[45,45],
-
-                    iconAnchor:[22,45]
-
+                    iconUrl: "finish-flag.gif",
+                    iconSize: [45, 45],
+                    iconAnchor: [22, 45]
                 }),
                 shadow: null
-
             },
-
-
             polyline_options: {
-
-                color: "red",
-
+                color: "#d64545",
                 weight: 4,
-
-                opacity: 0.8
-
+                opacity: 0.9
             }
+        }
+    )
+    .on("loaded", function(e) {
+        const gpx = e.target;
+        gpxLayer = gpx;
+        gpxTrackPoints = gpx._coords || [];
+        gpxTrackLength = gpx._info.length || 0;
+        northLineDistance = gpxTrackLength / 1000;
+        northLineElevation = gpx._info.elevation.gain;
 
+        if (finishMarker) {
+            map.removeLayer(finishMarker);
         }
 
-    )
-    .on("loaded", function(e){
+        finishMarker = L.marker([gpxTrackPoints[gpxTrackPoints.length - 1].lat, gpxTrackPoints[gpxTrackPoints.length - 1].lng], {
+            icon: L.icon({
+                iconUrl: "finish-flag.gif",
+                iconSize: [45, 45],
+                iconAnchor: [22, 45]
+            })
+        }).addTo(map).bindPopup("Arrivo GPX");
 
-        const gpx = e.target;
+        gpxRouteLine = L.polyline(
+            gpxTrackPoints.map((point) => [point.lat, point.lng]),
+            {
+                color: "#d64545",
+                weight: 4,
+                opacity: 0.9
+            }
+        ).addTo(map);
 
-
-        // Distanza totale North Line
-
-        northLineDistance =
-            gpx._info.length / 1000;
-
-
-
-        // Dislivello positivo totale North Line
-
-        northLineElevation =
-            gpx._info.elevation.gain;
-
-
+        if (firstLoad) {
+            map.fitBounds(gpxRouteLine.getBounds());
+        }
     })
     .addTo(map);
-
 }
 
 

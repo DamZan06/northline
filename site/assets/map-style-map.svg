@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" role="img" aria-label="Mappa">
+  <rect width="120" height="80" rx="12" fill="#f4f8ff"/>
+  <rect x="8" y="10" width="104" height="60" rx="8" fill="#ffffff" stroke="#5b7cff" stroke-width="2"/>
+  <path d="M20 28h20v16H20zM48 20h20v24H48zM76 24h20v20H76z" fill="#5b7cff" opacity="0.9"/>
+  <path d="M20 48h80" stroke="#7da1ff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M20 60l20-10 28 8 20-12" stroke="#4a6bff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
