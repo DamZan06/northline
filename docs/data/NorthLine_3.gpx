@@ -9,6 +9,18 @@
     <time>2026-05-30T11:51:29.000Z</time>
   </metadata>
 
+  <wpt lat="45.8259057602" lon="9.0140605555">
+		<ele>421.7</ele>
+    <time>1970-01-01T00:00:00.000Z</time>
+		<name>Start</name>
+	</wpt>
+  
+  <wpt lat="47.8059407226" lon="8.5856196909">
+    <ele>784.5</ele>
+    <time>1970-01-01T00:00:00.000Z</time>
+		<name>End</name>
+	</wpt>
+
   <trk>
     <name>Swisstopo Route</name>
     <trkseg>
