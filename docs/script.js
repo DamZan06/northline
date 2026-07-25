@@ -1,6 +1,7 @@
 ﻿const firebaseURL = "https://northline-a4eaa-default-rtdb.europe-west1.firebasedatabase.app/livetrack/points.json";
 const plannedStartDateIso = '2026-08-01T00:04:00+02:00';
 const contentDatabasePath = 'content';
+const trackerDataUrl = 'data/NorthLine_trackers.json';
 const defaultCenter = [46.0, 8.9];
 const defaultZoom = 12;
 const adminSessionKey = 'northline-admin-authenticated';
@@ -14,10 +15,13 @@ let chartInstances = {};
 let activeLayer = null;
 let gpxTotalKm = null;
 let gpxCoords = [];
+let gpxWaypoints = [];
 let gpxLoadPromise = null;
+let trackersLoadPromise = null;
 let latestLiveCoord = null;
 let latestVisitorCoord = null;
 let firebaseAppInstance = null;
+let routeMarkerGroup = null;
 const mediaModalState = {
     items: [],
     index: 0,
@@ -171,6 +175,88 @@ function readItemGeo(item) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     return { lat, lng };
 }
+
+function buildNightGallerySeedEntries() {
+    return [
+        {
+            id: 'night-photo-1',
+            title: 'Notte 1',
+            date: '01/08/2026',
+            time: '22:00',
+            km: '0',
+            location: 'Via al Laghetto, 6832 Chiasso',
+            tag: 'night',
+            description: 'Prima notte del percorso',
+            image: 'data/Night_1.jpg',
+            geo: { lat: 45.8259066594, lng: 9.0140666007 }
+        },
+        {
+            id: 'night-photo-2',
+            title: 'Notte 2',
+            date: '02/08/2026',
+            time: '22:00',
+            km: '0',
+            location: 'A Tasín 2, 6702 Claro',
+            tag: 'night',
+            description: 'Seconda notte del percorso',
+            image: 'data/Night_2.jpg',
+            geo: { lat: 46.2565465111, lng: 9.0111590127 }
+        },
+        {
+            id: 'night-photo-3',
+            title: 'Notte 3',
+            date: '03/08/2026',
+            time: '22:00',
+            km: '0',
+            location: 'Gotthard-Strassentunnel 41, 6493 Hospental',
+            tag: 'night',
+            description: 'Terza notte del percorso',
+            image: 'data/Night_3.jpg',
+            geo: { lat: 46.5913747331, lng: 8.5618263165 }
+        },
+        {
+            id: 'night-photo-4',
+            title: 'Notte 4',
+            date: '04/08/2026',
+            time: '22:00',
+            km: '0',
+            location: 'Rottannenstrasse, Arth',
+            tag: 'night',
+            description: 'Quarta notte del percorso',
+            image: 'data/Night_4.jpg',
+            geo: { lat: 47.0562228192, lng: 8.5364110764 }
+        },
+        {
+            id: 'night-photo-5',
+            title: 'Notte 5',
+            date: '05/08/2026',
+            time: '22:00',
+            km: '0',
+            location: 'GGPQ+RG, 8180 Bülach',
+            tag: 'night',
+            description: 'Quinta notte del percorso',
+            image: 'data/Night_5.jpg',
+            geo: { lat: 47.5263890229, lng: 8.5443702332 }
+        }
+    ];
+}
+
+function mergeNightGalleryEntries(items) {
+    const current = Array.isArray(items) ? items : [];
+    const seedEntries = buildNightGallerySeedEntries();
+    const existingIds = new Set(current.map(item => String(item?.id || '')));
+    const missing = seedEntries.filter(entry => !existingIds.has(entry.id));
+    return [...current, ...missing];
+}
+
+async function syncNightGalleryEntriesToFirebase() {
+    const galleryItems = await loadCollection('gallery');
+    const merged = mergeNightGalleryEntries(galleryItems);
+    if (merged.length !== galleryItems.length) {
+        await persistCollection('gallery', merged);
+    }
+}
+
 function buildUnifiedDiaryTimelineEntries(diaryEntries, timelineEntries) {
     const diaryItems = diaryEntries.map((entry, index) => ({
         ...entry,
@@ -201,11 +287,12 @@ function buildUnifiedDiaryTimelineEntries(diaryEntries, timelineEntries) {
         });
 }
 async function loadUnifiedMediaItems() {
-    const [diaryEntries, timelineEntries, galleryEntries] = await Promise.all([
+    const [diaryEntries, timelineEntries, galleryEntriesRaw] = await Promise.all([
         loadCollection('diary'),
         loadCollection('timeline'),
         loadCollection('gallery')
     ]);
+    const galleryEntries = mergeNightGalleryEntries(galleryEntriesRaw);
     const media = [];
     diaryEntries.forEach((entry, index) => {
         if (!entry.image) return;
@@ -762,13 +849,82 @@ function parseGpxXml(gpxText) {
     return { coords, totalKm };
 }
 
+async function ensureRouteTrackersLoaded() {
+    if (gpxWaypoints.length) return;
+    if (trackersLoadPromise) {
+        await trackersLoadPromise;
+        return;
+    }
+    trackersLoadPromise = fetch(trackerDataUrl)
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (!Array.isArray(data)) return;
+            gpxWaypoints = data.map((entry, index) => ({
+                lat: Number(entry?.lat),
+                lng: Number(entry?.lon),
+                name: String(entry?.name || '').trim(),
+                index
+            })).filter(point => Number.isFinite(point.lat) && Number.isFinite(point.lng));
+        })
+        .catch(error => {
+            console.warn('Impossibile caricare tracker separati:', error);
+        })
+        .finally(() => {
+            trackersLoadPromise = null;
+        });
+    await trackersLoadPromise;
+}
+
+function buildRouteLabel(prefix, index) {
+    return `${prefix} ${index + 1}`;
+}
+
+function formatWaypointLabel(name, index) {
+    const raw = String(name || '').trim();
+    if (!raw) return buildRouteLabel('Night', index);
+    return raw.replace(/_/g, ' ');
+}
+
+function buildNightMarkerIcon(label) {
+    return null;
+}
+
+function buildStartFinishMarkerIcon(type) {
+    const isStart = type === 'start';
+    if (isStart) return null;
+    return L.divIcon({
+        className: `route-marker route-marker--${type}`,
+        html: `<div class="route-marker__wrap"><span class="route-marker__pin"><span>${isStart ? 'S' : 'F'}</span></span><span class="route-marker__label">${isStart ? 'Partenza' : 'Arrivo'}</span></div>`,
+        iconSize: [90, 56],
+        iconAnchor: [45, 52],
+        popupAnchor: [0, -44]
+    });
+}
+
+function renderRouteTrackers() {
+    if (!mapInstance || typeof L === 'undefined' || !gpxWaypoints.length) return;
+    if (routeMarkerGroup) {
+        mapInstance.removeLayer(routeMarkerGroup);
+    }
+    routeMarkerGroup = L.layerGroup().addTo(mapInstance);
+    const trackerWaypoints = gpxWaypoints.filter((waypoint, index) => index < gpxWaypoints.length - 1 && !/ziel/i.test(waypoint.name));
+    trackerWaypoints.forEach((waypoint, index) => {
+        const label = formatWaypointLabel(waypoint.name, index);
+        const marker = L.marker([waypoint.lat, waypoint.lng]).addTo(routeMarkerGroup);
+        marker.bindPopup(`<strong>${escapeHtml(label)}</strong>`);
+    });
+}
+
 async function ensureGpxDataLoaded() {
     if (gpxCoords.length && Number.isFinite(gpxTotalKm) && gpxTotalKm > 0) return;
     if (gpxLoadPromise) {
         await gpxLoadPromise;
         return;
     }
-    gpxLoadPromise = fetch('data/NorthLine_3.gpx')
+    gpxLoadPromise = fetch('data/NorthLine.gpx')
         .then(response => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.text();
@@ -873,7 +1029,7 @@ function addMapControl() {
     mapInstance.addControl(new MapControl({ position: 'topright' }));
 }
 function initMap(options = {}) {
-    const withGpx = options.withGpx !== false;
+    const showRouteTrackers = options.showRouteTrackers === true;
     if (mapInstance) return;
     if (typeof L === 'undefined') return;
     ensureLeafletAssets();
@@ -882,8 +1038,7 @@ function initMap(options = {}) {
     activeLayer = tileProviders.osm.addTo(mapInstance);
     L.control.zoom({ position: 'topright' }).addTo(mapInstance);
     addMapControl();
-    if (!withGpx) return;
-    const gpxUrl = 'data/NorthLine_3.gpx';
+    const gpxUrl = 'data/NorthLine.gpx';
     try {
         new L.GPX(gpxUrl, {
             async: true,
@@ -910,6 +1065,9 @@ function initMap(options = {}) {
                     if (!startMarker) startMarker = L.marker([first.lat, first.lng]).addTo(mapInstance);
                     if (finishMarker) mapInstance.removeLayer(finishMarker);
                     finishMarker = L.marker([last.lat, last.lng], { icon: L.icon({ iconUrl: 'assets/icons/finish-flag.gif', iconSize: [45,45], iconAnchor: [22,45] }) }).addTo(mapInstance);
+                    if (showRouteTrackers) {
+                        ensureRouteTrackersLoaded().then(() => renderRouteTrackers()).catch(() => {});
+                    }
                     // refresh live UI using GPX total if we are on the live page
                     fetchPoints().then(points => {
                         const s = buildSummary(points);
@@ -1007,8 +1165,8 @@ function updateVisitorDistance(lastPoint) {
 async function initLivePage() {
     initializeTheme();
     updateLiveUI(buildLivePreStartSummary());
-    await ensureGpxDataLoaded();
-    initMap();
+    await Promise.all([ensureGpxDataLoaded(), ensureRouteTrackersLoaded()]);
+    initMap({ showRouteTrackers: true });
     buildNav();
     const points = await fetchPoints();
     const summary = buildSummary(points) || buildLivePreStartSummary();
@@ -1665,6 +1823,7 @@ function initAdminPage() {
             showAdminState(true);
             initAdminFormHelpers();
             bindAdminForm('gallery');
+            await syncNightGalleryEntriesToFirebase();
             await renderAdminCollection('gallery');
             loginForm.reset();
         };
@@ -1685,7 +1844,9 @@ function initAdminPage() {
     if (isAdminAuthenticated()) {
         initAdminFormHelpers();
         bindAdminForm('gallery');
-        renderAdminCollection('gallery');
+        syncNightGalleryEntriesToFirebase()
+            .then(() => renderAdminCollection('gallery'))
+            .catch(() => renderAdminCollection('gallery'));
     }
 }
 function getPhotoMarkerIcon(item, zoomLevel) {
@@ -1711,7 +1872,7 @@ function bindPhotoMapFullscreen() {
     });
 }
 async function initGalleryPhotoMap(items) {
-    initMap();
+    initMap({ showRouteTrackers: false });
     if (!mapInstance) return;
     bindPhotoMapFullscreen();
 
@@ -1783,7 +1944,7 @@ async function initGalleryPhotoMap(items) {
 async function initReplayPage() {
     initializeTheme();
     await ensureGpxDataLoaded();
-    initMap();
+    initMap({ showRouteTrackers: false });
     buildNav();
     const points = await fetchPoints();
     const coords = points.length ? points.map(p => [p.coordinate.lat, p.coordinate.lon]) : [defaultCenter];
