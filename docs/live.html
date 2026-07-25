@@ -20,7 +20,7 @@
     <meta name="twitter:title" content="NorthLine – Mappa Live">
     <meta name="twitter:description" content="Segui la posizione live e i dati aggiornati dell'avventura NorthLine.">
     <meta name="twitter:image" content="https://damzan06.github.io/northline/assets/preview.png?v=20260715s">
-    <link rel="stylesheet" href="style.css?v=20260715e">
+    <link rel="stylesheet" href="style.css?v=20260725d">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260715r">
     <link rel="icon" type="image/png" href="assets/favicon-v2.png?v=20260715r">
@@ -40,17 +40,11 @@
             <a href="index.html">Home</a>
             <a href="live.html">Live</a>
             <a href="dashboard.html">Dashboard</a>
-            <a href="diary.html">Diario</a>
             <a href="gallery.html">Galleria</a>
-            <a href="timeline.html">Timeline</a>
             <a href="replay.html">Replay</a>
             <a href="progress.html">Progressi</a>
             <a href="project.html">Il progetto</a>
         </nav>
-        <div class="topbar-actions">
-            <button id="themeToggle" class="button ghost">Tema</button>
-            <a class="button primary" href="dashboard.html">Statistiche</a>
-        </div>
     </header>
     <main class="page page-live">
         <section class="page-header">
@@ -67,7 +61,6 @@
                         <p class="eyebrow">Statistiche Live</p>
                         <h2>Stato attuale</h2>
                     </div>
-                    <button id="panelToggle" class="button icon">⋯</button>
                 </div>
                 <div class="stats-grid">
                     <article>
@@ -116,8 +109,8 @@
                         <strong id="steps">--</strong>
                     </article>
                     <article>
-                        <span>Distanza visitatore</span>
-                        <strong id="visitorDistance">--</strong>
+                        <span id="visitorDistanceLabel">Distanza dalla partenza</span>
+                        <strong id="visitorDistance">0 km</strong>
                     </article>
                 </div>
             </aside>
@@ -128,16 +121,13 @@
                     <button id="centerLiveBtn" class="geo-button" title="Centra sulla posizione live">📍</button>
                     <button id="mapFullscreenBtn" class="geo-button" title="Mappa a schermo intero">⛶</button>
                 </div>
-                <div class="map-footer">
-                    <!-- hint removed per pulizia UI -->
-                </div>
             </div>
         </section>
     </main>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js?v=20260715p"></script>
+    <script src="script.js?v=20260725d"></script>
 </body>
 </html>
 

@@ -5,7 +5,10 @@
     <title>NorthLine – Galleria</title>
     <meta name="description" content="Galleria fotografica NorthLine con filtro per giorno, checkpoint, località e bivacchi.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260725g">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260715r">
     <link rel="icon" type="image/png" href="assets/favicon-v2.png?v=20260715r">
     <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260715r">
@@ -23,38 +26,41 @@
             <a href="index.html">Home</a>
             <a href="live.html">Live</a>
             <a href="dashboard.html">Dashboard</a>
-            <a href="diary.html">Diario</a>
             <a href="gallery.html">Galleria</a>
-            <a href="timeline.html">Timeline</a>
             <a href="replay.html">Replay</a>
             <a href="progress.html">Progressi</a>
             <a href="project.html">Il progetto</a>
         </nav>
-        <div class="topbar-actions">
-            <button id="themeToggle" class="button ghost">Tema</button>
-            <a class="button primary" href="live.html">Mappa Live</a>
-        </div>
     </header>
     <main class="page page-gallery">
         <section class="section">
-            <div class="section-title">
-                <p class="eyebrow">Fotografie</p>
-                <h2>Galleria multimediale.</h2>
-                <p>Filtra per giorno, località, checkpoint e bivacco per trovare i momenti più belli.</p>
-            </div>
-            <div class="gallery-controls gallery-filter">
-                <button class="button secondary" data-filter="all">Tutti</button>
-                <button class="button secondary" data-filter="montagna">Montagna</button>
-                <button class="button secondary" data-filter="checkpoint">Checkpoint</button>
-                <button class="button secondary" data-filter="bivacco">Bivacco</button>
-                <button class="button secondary" data-filter="città">Città</button>
+            <div class="section-title gallery-title-row">
+                <div>
+                    <p class="eyebrow">Fotografie</p>
+                    <h2>Galleria completa del viaggio</h2>
+                </div>
             </div>
             <div class="gallery-grid"></div>
+        </section>
+        <section class="section section-white">
+            <div class="section-title">
+                <p class="eyebrow">Cartina foto</p>
+                <h2>Posizione delle immagini.</h2>
+                <p id="galleryPhotoMapStatus">In attesa di immagini geolocalizzate...</p>
+            </div>
+            <div class="map-wrap map-wrap-photo-gallery" style="min-height:560px;">
+                <div id="map"></div>
+                <div class="map-actions">
+                    <button id="galleryPhotoMapFullscreenBtn" type="button" class="map-toggle-btn" title="Mappa a schermo intero">⛶</button>
+                </div>
+            </div>
         </section>
     </main>
     <div class="modal-backdrop" role="dialog" aria-modal="true">
         <div class="modal-content">
             <button class="modal-close" aria-label="Chiudi">×</button>
+            <button class="modal-nav modal-prev" id="modalPrev" aria-label="Immagine precedente">‹</button>
+            <button class="modal-nav modal-next" id="modalNext" aria-label="Immagine successiva">›</button>
             <img id="modalImage" src="assets/preview.png" alt="">
             <div class="modal-details">
                 <h3 id="modalTitle">Titolo immagine</h3>
@@ -63,7 +69,11 @@
             </div>
         </div>
     </div>
-    <script src="script.js?v=20260715p"></script>
+    <script src="firebase-config.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="script.js?v=20260725g"></script>
 </body>
 </html>
 

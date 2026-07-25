@@ -1,6 +1,9 @@
 ﻿const firebaseURL = "https://northline-a4eaa-default-rtdb.europe-west1.firebasedatabase.app/livetrack/points.json";
+const plannedStartDateIso = '2026-08-01T00:04:00+02:00';
+const contentDatabasePath = 'content';
 const defaultCenter = [46.0, 8.9];
 const defaultZoom = 12;
+const adminSessionKey = 'northline-admin-authenticated';
 let mapInstance = null;
 let routeLine = null;
 let startMarker = null;
@@ -14,6 +17,118 @@ let gpxCoords = [];
 let gpxLoadPromise = null;
 let latestLiveCoord = null;
 let latestVisitorCoord = null;
+let firebaseAppInstance = null;
+const mediaModalState = {
+    items: [],
+    index: 0,
+    onChange: null,
+    bound: false,
+    touchStartX: null
+};
+const photoMapState = {
+    markerById: new Map(),
+    clusterGroup: null
+};
+function createRecordId(prefix = 'item') {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return `${prefix}-${crypto.randomUUID()}`;
+    }
+    return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+}
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+function getFirebaseClientConfig() {
+    return window.NorthLineFirebaseConfig || null;
+}
+function hasUsableFirebaseConfig() {
+    const config = getFirebaseClientConfig();
+    if (!config) return false;
+    const required = ['apiKey', 'authDomain', 'databaseURL', 'projectId', 'appId'];
+    return required.every(key => {
+        const value = String(config[key] || '');
+        return value && !value.startsWith('INSERISCI_');
+    });
+}
+function getFirebaseContentUrl(type) {
+    const config = getFirebaseClientConfig();
+    if (!config?.databaseURL) return null;
+    return `${String(config.databaseURL).replace(/\/$/, '')}/${contentDatabasePath}/${type}.json`;
+}
+function ensureFirebaseClient() {
+    const config = getFirebaseClientConfig();
+    if (!config || !hasUsableFirebaseConfig() || typeof firebase === 'undefined') return null;
+    if (!firebaseAppInstance) {
+        firebaseAppInstance = firebase.apps?.length ? firebase.app() : firebase.initializeApp(config);
+    }
+    return firebaseAppInstance;
+}
+function getFirebaseDatabase() {
+    const app = ensureFirebaseClient();
+    return app ? firebase.database(app) : null;
+}
+function getFirebaseAuth() {
+    const app = ensureFirebaseClient();
+    return app ? firebase.auth(app) : null;
+}
+async function loadCollection(type) {
+    const publicUrl = getFirebaseContentUrl(type);
+    if (!publicUrl) return [];
+    try {
+        const response = await fetch(publicUrl, { cache: 'no-store' });
+        if (!response.ok) return [];
+        const data = await response.json();
+        if (Array.isArray(data)) return data;
+    } catch (error) {
+        console.warn(`Impossibile leggere ${type} da Firebase:`, error);
+    }
+    return [];
+}
+async function persistCollection(type, items) {
+    const database = getFirebaseDatabase();
+    if (!database) {
+        throw new Error('Firebase non disponibile. Verifica configurazione e login admin.');
+    }
+    await database.ref(`${contentDatabasePath}/${type}`).set(items);
+}
+function isAdminAuthenticated() {
+    return sessionStorage.getItem(adminSessionKey) === 'true';
+}
+function setAdminAuthenticated(value) {
+    if (value) sessionStorage.setItem(adminSessionKey, 'true');
+    else sessionStorage.removeItem(adminSessionKey);
+}
+async function moveCollectionItem(type, itemId, direction) {
+    const items = await loadCollection(type);
+    const index = items.findIndex(item => item.id === itemId);
+    if (index < 0) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= items.length) return;
+    const [entry] = items.splice(index, 1);
+    items.splice(targetIndex, 0, entry);
+    await persistCollection(type, items);
+}
+async function deleteCollectionItem(type, itemId) {
+    const items = (await loadCollection(type)).filter(item => item.id !== itemId);
+    await persistCollection(type, items);
+}
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            resolve('');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => reject(reader.error || new Error('Errore lettura file'));
+        reader.readAsDataURL(file);
+    });
+}
 function getTileProviders() {
     if (typeof L === 'undefined') return {};
     return {
@@ -34,6 +149,184 @@ function formatRelativeDate(timestamp) {
     if (diff < 3600) return `${Math.floor(diff / 60)}m fa`;
     return `${Math.floor(diff / 3600)}h fa`;
 }
+function parseDateTime(dateValue = '', timeValue = '') {
+    const rawDate = String(dateValue || '').trim();
+    const rawTime = String(timeValue || '').trim();
+    if (!rawDate && !rawTime) return Number.NaN;
+    const localMatch = rawDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+    if (localMatch) {
+        const [, d, m, y, dateHour = '', dateMinute = ''] = localMatch;
+        const timeMatch = rawTime.match(/^(\d{1,2}):(\d{2})/);
+        const h = timeMatch ? timeMatch[1] : (dateHour || '0');
+        const min = timeMatch ? timeMatch[2] : (dateMinute || '0');
+        return new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(min)).getTime();
+    }
+    const combined = rawTime ? `${rawDate} ${rawTime}` : rawDate;
+    const parsed = new Date(combined).getTime();
+    return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+function readItemGeo(item) {
+    const lat = Number(item?.geo?.lat ?? item?.lat);
+    const lng = Number(item?.geo?.lng ?? item?.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return { lat, lng };
+}
+function buildUnifiedDiaryTimelineEntries(diaryEntries, timelineEntries) {
+    const diaryItems = diaryEntries.map((entry, index) => ({
+        ...entry,
+        _source: 'diary',
+        _sortTs: parseDateTime(entry.date),
+        _sortIndex: index,
+        _title: entry.title || `Diario ${index + 1}`,
+        _subtitle: `${entry.date || 'Data non impostata'} · ${entry.km || '0'} km`,
+        _text: entry.text || '',
+        _image: entry.image || ''
+    }));
+    const timelineItems = timelineEntries.map((entry, index) => ({
+        ...entry,
+        _source: 'timeline',
+        _sortTs: parseDateTime(entry.date, entry.time),
+        _sortIndex: index,
+        _title: entry.title || `Aggiornamento ${index + 1}`,
+        _subtitle: `${entry.date || 'Data non impostata'} ${entry.time || '--:--'}`.trim(),
+        _text: entry.description || '',
+        _image: entry.image || ''
+    }));
+    return [...diaryItems, ...timelineItems]
+        .sort((a, b) => {
+            const aTs = Number.isFinite(a._sortTs) ? a._sortTs : Number.POSITIVE_INFINITY;
+            const bTs = Number.isFinite(b._sortTs) ? b._sortTs : Number.POSITIVE_INFINITY;
+            if (aTs !== bTs) return aTs - bTs;
+            return a._sortIndex - b._sortIndex;
+        });
+}
+async function loadUnifiedMediaItems() {
+    const [diaryEntries, timelineEntries, galleryEntries] = await Promise.all([
+        loadCollection('diary'),
+        loadCollection('timeline'),
+        loadCollection('gallery')
+    ]);
+    const media = [];
+    diaryEntries.forEach((entry, index) => {
+        if (!entry.image) return;
+        media.push({
+            id: entry.id || createRecordId('media-diary'),
+            source: 'Diario',
+            title: entry.title || `Diario ${index + 1}`,
+            location: `${entry.date || 'Data non impostata'} · ${entry.km || '0'} km`,
+            description: entry.text || '',
+            image: entry.image,
+            geo: readItemGeo(entry),
+            sortTs: parseDateTime(entry.date)
+        });
+    });
+    timelineEntries.forEach((entry, index) => {
+        if (!entry.image) return;
+        media.push({
+            id: entry.id || createRecordId('media-timeline'),
+            source: 'Timeline',
+            title: entry.title || `Aggiornamento ${index + 1}`,
+            location: `${entry.date || 'Data non impostata'} ${entry.time || '--:--'}`.trim(),
+            description: entry.description || '',
+            image: entry.image,
+            geo: readItemGeo(entry),
+            sortTs: parseDateTime(entry.date, entry.time)
+        });
+    });
+    galleryEntries.forEach((entry, index) => {
+        if (!entry.image) return;
+        const dateSegment = [entry.date, entry.time].filter(Boolean).join(' ').trim();
+        const kmSegment = entry.km ? `${entry.km} km` : '';
+        const locationLine = [entry.location, dateSegment, kmSegment].filter(Boolean).join(' · ');
+        media.push({
+            id: entry.id || createRecordId('media-gallery'),
+            source: 'Galleria',
+            title: entry.title || `Foto ${index + 1}`,
+            location: locationLine || 'Localita non impostata',
+            description: entry.description || '',
+            image: entry.image,
+            geo: readItemGeo(entry),
+            sortTs: parseDateTime(entry.date, entry.time)
+        });
+    });
+    return media.sort((a, b) => {
+        const aTs = Number.isFinite(a.sortTs) ? a.sortTs : Number.POSITIVE_INFINITY;
+        const bTs = Number.isFinite(b.sortTs) ? b.sortTs : Number.POSITIVE_INFINITY;
+        if (aTs !== bTs) return bTs - aTs;
+        return a.title.localeCompare(b.title, 'it');
+    });
+}
+function updateMediaModal() {
+    const { items, index, onChange } = mediaModalState;
+    const current = items[index];
+    if (!current) return;
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalLocation = document.getElementById('modalLocation');
+    const modalDescription = document.getElementById('modalDescription');
+    if (modalImage) {
+        modalImage.src = current.image;
+        modalImage.alt = current.title;
+    }
+    if (modalTitle) modalTitle.textContent = current.title;
+    if (modalLocation) modalLocation.textContent = `${current.location || ''}${current.source ? ` · ${current.source}` : ''}`;
+    if (modalDescription) modalDescription.textContent = current.description || 'Nessuna descrizione disponibile.';
+    if (typeof onChange === 'function') onChange(current, index);
+}
+function moveMediaModal(step) {
+    if (!mediaModalState.items.length) return;
+    const length = mediaModalState.items.length;
+    mediaModalState.index = (mediaModalState.index + step + length) % length;
+    updateMediaModal();
+}
+function closeMediaModal() {
+    document.querySelector('.modal-backdrop')?.classList.remove('active');
+}
+function openMediaModal(index) {
+    if (!mediaModalState.items.length) return;
+    const modal = document.querySelector('.modal-backdrop');
+    if (!modal) return;
+    mediaModalState.index = Math.max(0, Math.min(index, mediaModalState.items.length - 1));
+    updateMediaModal();
+    modal.classList.add('active');
+}
+function ensureMediaModalBindings() {
+    if (mediaModalState.bound) return;
+    const modal = document.querySelector('.modal-backdrop');
+    if (!modal) return;
+    document.querySelector('.modal-close')?.addEventListener('click', closeMediaModal);
+    modal.addEventListener('click', event => {
+        if (event.target === modal) closeMediaModal();
+    });
+    document.getElementById('modalPrev')?.addEventListener('click', () => moveMediaModal(-1));
+    document.getElementById('modalNext')?.addEventListener('click', () => moveMediaModal(1));
+    const modalImage = document.getElementById('modalImage');
+    modalImage?.addEventListener('touchstart', event => {
+        mediaModalState.touchStartX = event.changedTouches?.[0]?.screenX ?? null;
+    }, { passive: true });
+    modalImage?.addEventListener('touchend', event => {
+        const startX = mediaModalState.touchStartX;
+        const endX = event.changedTouches?.[0]?.screenX ?? null;
+        if (!Number.isFinite(startX) || !Number.isFinite(endX)) return;
+        const delta = endX - startX;
+        if (Math.abs(delta) < 35) return;
+        if (delta < 0) moveMediaModal(1);
+        else moveMediaModal(-1);
+    }, { passive: true });
+    document.addEventListener('keydown', event => {
+        if (!document.querySelector('.modal-backdrop')?.classList.contains('active')) return;
+        if (event.key === 'Escape') closeMediaModal();
+        if (event.key === 'ArrowLeft') moveMediaModal(-1);
+        if (event.key === 'ArrowRight') moveMediaModal(1);
+    });
+    mediaModalState.bound = true;
+}
+function useMediaModal(items, onChange = null) {
+    mediaModalState.items = items;
+    mediaModalState.index = 0;
+    mediaModalState.onChange = onChange;
+    ensureMediaModalBindings();
+}
 function setTheme(theme) {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('northline-theme', theme);
@@ -44,6 +337,67 @@ function initializeTheme() {
     document.getElementById('themeToggle')?.addEventListener('click', () => {
         setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
     });
+    initializeMobileMenu();
+}
+function initializeMobileMenu() {
+    const topbar = document.querySelector('.topbar');
+    const nav = topbar?.querySelector('.main-nav');
+    if (!topbar || !nav || topbar.dataset.mobileMenuInit === 'true') return;
+
+    const brandIcon = topbar.querySelector('.brand-icon');
+    if (brandIcon) {
+        brandIcon.style.cursor = 'pointer';
+        brandIcon.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+    }
+
+    const toggleButton = document.createElement('button');
+    toggleButton.type = 'button';
+    toggleButton.className = 'topbar-menu-toggle';
+    toggleButton.id = 'topbarMenuToggle';
+    toggleButton.setAttribute('aria-label', 'Apri menu');
+    toggleButton.setAttribute('aria-expanded', 'false');
+    toggleButton.textContent = '☰';
+
+    topbar.appendChild(toggleButton);
+
+    let overlay = document.querySelector('.mobile-nav-overlay');
+    if (!overlay) {
+        overlay = document.createElement('button');
+        overlay.type = 'button';
+        overlay.className = 'mobile-nav-overlay';
+        overlay.setAttribute('aria-label', 'Chiudi menu');
+        document.body.appendChild(overlay);
+    }
+
+    const closeMenu = () => {
+        document.body.classList.remove('mobile-nav-open');
+        toggleButton.setAttribute('aria-expanded', 'false');
+        toggleButton.textContent = '☰';
+    };
+
+    toggleButton.addEventListener('click', () => {
+        const isOpen = document.body.classList.toggle('mobile-nav-open');
+        toggleButton.setAttribute('aria-expanded', String(isOpen));
+        toggleButton.textContent = isOpen ? '✕' : '☰';
+    });
+
+    overlay.addEventListener('click', closeMenu);
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeMenu();
+    });
+
+    nav.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', closeMenu);
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 760) closeMenu();
+    });
+
+    topbar.dataset.mobileMenuInit = 'true';
 }
 function buildNav() {
     const tileProviders = getTileProviders();
@@ -99,17 +453,180 @@ function buildSummary(points) {
 }
 function updateHomeSummary(summary) {
     if (!summary) return;
-    document.getElementById('homeDistance').textContent = summary.totalDistance.toFixed(1);
+    const distanceText = summary.totalDistance === 0 ? '0' : summary.totalDistance.toFixed(1);
+    document.getElementById('homeDistance').textContent = distanceText;
     const blended = computeBlendedRemaining(summary);
     const remaining = blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
     const completion = computeDynamicProgress(summary.totalDistance, remaining);
     document.getElementById('homeRemaining').textContent = remaining.toFixed(1);
     document.getElementById('homeCompletion').textContent = `${completion.toFixed(1)}%`;
-    document.getElementById('homeTime').textContent = formatTime(summary.duration);
+    document.getElementById('homeTime').textContent = summary.duration > 0 ? formatTime(summary.duration) : '0';
     document.getElementById('homeGain').textContent = Math.round(summary.elevationGain);
     document.getElementById('homeSteps').textContent = computeEstimatedSteps(summary.totalDistance, summary.duration).toLocaleString();
     document.getElementById('homeStatusLabel').textContent = summary.status;
-    document.getElementById('homeStatusText').textContent = summary.status === 'In movimento' ? 'Tracker attivo e aggiornato.' : 'Dati disponibili, attesa prossima posizione.';
+    document.getElementById('homeStatusText').textContent = summary.status === 'In movimento'
+        ? 'Tracker attivo e aggiornato.'
+        : summary.status === 'Non partito'
+            ? 'In attesa della partenza: nessun dato live disponibile.'
+            : 'Dati disponibili, attesa prossima posizione.';
+    updateHomeHeroStatusDot(summary.status);
+    updateHomeStateLegend(summary.status);
+}
+function updateHomeHeroStatusDot(statusLabel) {
+    const dot = document.getElementById('homeStatusDot');
+    if (!dot) return;
+    dot.classList.remove('status-not-started', 'status-moving', 'status-paused', 'status-ended', 'status-completed');
+    const activeKey = normalizeHomeStatus(statusLabel);
+    if (activeKey === 'moving') dot.classList.add('status-moving');
+    else if (activeKey === 'paused') dot.classList.add('status-paused');
+    else if (activeKey === 'ended') dot.classList.add('status-ended');
+    else if (activeKey === 'completed') dot.classList.add('status-completed');
+    else dot.classList.add('status-not-started');
+}
+function normalizeHomeStatus(status) {
+    const value = String(status || '').toLowerCase();
+    if (value.includes('mov')) return 'moving';
+    if (value.includes('paus')) return 'paused';
+    if (value.includes('fine')) return 'ended';
+    if (value.includes('complet')) return 'completed';
+    return 'not-started';
+}
+
+function updateHomeStateLegend(statusLabel) {
+    const label = statusLabel || 'Non partito';
+    const stateLabel = document.getElementById('homeAdventureState');
+    if (stateLabel) stateLabel.textContent = label;
+
+    const activeKey = normalizeHomeStatus(label);
+    document.querySelectorAll('.status-grid .status-pill').forEach(pill => pill.classList.remove('active'));
+    const activePill = document.getElementById(`homeState-${activeKey}`);
+    if (activePill) activePill.classList.add('active');
+}
+
+function buildHomePreStartSummary() {
+    return {
+        totalDistance: 0,
+        duration: 0,
+        elevationGain: 0,
+        status: 'Non partito',
+        lastPoint: null,
+        points: [],
+        speed: 0,
+        progress: 0
+    };
+}
+function buildDashboardPreStartSummary() {
+    return {
+        points: [],
+        lastPoint: null,
+        totalDistance: 0,
+        duration: 0,
+        speed: 0,
+        elevationGain: 0,
+        progress: 0,
+        status: 'Non partito'
+    };
+}
+function buildLivePreStartSummary() {
+    return {
+        points: [],
+        lastPoint: null,
+        totalDistance: 0,
+        duration: 0,
+        speed: 0,
+        elevationGain: 0,
+        progress: 0,
+        status: 'Non partito'
+    };
+}
+function updateDashboardSummary(summary) {
+    const metricDistance = document.getElementById('metricDistance');
+    const metricRemaining = document.getElementById('metricRemaining');
+    const metricCompletion = document.getElementById('metricCompletion');
+    const metricSpeed = document.getElementById('metricSpeed');
+    const metricAltitude = document.getElementById('metricAltitude');
+    const metricElevation = document.getElementById('metricElevation');
+    const metricTime = document.getElementById('metricTime');
+
+    const distanceText = summary.totalDistance === 0 ? '0' : summary.totalDistance.toFixed(1);
+    if (metricDistance) metricDistance.textContent = `${distanceText} km`;
+    const blended = computeBlendedRemaining(summary);
+    const remaining = blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
+    const completion = computeDynamicProgress(summary.totalDistance, remaining);
+    const completionText = completion === 0 ? '0%' : `${completion.toFixed(1)}%`;
+    if (metricRemaining) metricRemaining.textContent = `${remaining.toFixed(1)} km`;
+    if (metricCompletion) metricCompletion.textContent = completionText;
+    if (metricSpeed) metricSpeed.textContent = `${summary.speed.toFixed(1)} km/h`;
+    const altitude = Number(summary.lastPoint?.altitudine?.metri ?? 0);
+    if (metricAltitude) metricAltitude.textContent = `${altitude.toFixed(0)} m`;
+    if (metricElevation) metricElevation.textContent = `${Math.round(summary.elevationGain)} m`;
+    if (metricTime) metricTime.textContent = summary.duration > 0 ? formatTime(summary.duration) : '0';
+}
+function initHomeCountdown() {
+    const dayEl = document.getElementById('countdownDays');
+    const hourEl = document.getElementById('countdownHours');
+    const minuteEl = document.getElementById('countdownMinutes');
+    const secondEl = document.getElementById('countdownSeconds');
+    const messageEl = document.getElementById('countdownMessage');
+    const countdownEl = document.getElementById('homeCountdown');
+    if (!dayEl || !hourEl || !minuteEl || !secondEl || !messageEl) return;
+
+    const hideCountdown = () => {
+        if (!countdownEl) return;
+        countdownEl.hidden = true;
+        countdownEl.classList.add('is-finished');
+    };
+
+    const target = new Date(plannedStartDateIso).getTime();
+
+    const render = () => {
+        const diffMs = target - Date.now();
+        if (diffMs <= 0) {
+            dayEl.textContent = '0';
+            hourEl.textContent = '00';
+            minuteEl.textContent = '00';
+            secondEl.textContent = '00';
+            messageEl.textContent = 'La partenza prevista e in corso.';
+            hideCountdown();
+            return true;
+        }
+
+        const totalSeconds = Math.floor(diffMs / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        dayEl.textContent = String(days);
+        hourEl.textContent = String(hours).padStart(2, '0');
+        minuteEl.textContent = String(minutes).padStart(2, '0');
+        secondEl.textContent = String(seconds).padStart(2, '0');
+        messageEl.textContent = 'Countdown aggiornato in tempo reale.';
+        return false;
+    };
+
+    if (render()) return;
+    const timer = setInterval(() => {
+        if (render()) clearInterval(timer);
+    }, 1000);
+}
+
+function updateHomeCountdownVisibility(summary) {
+    const countdown = document.getElementById('homeCountdown');
+    if (!countdown) return;
+    const started = Boolean(summary?.lastPoint) || Number(summary?.totalDistance || 0) > 0;
+    const countdownFinished = Date.now() >= new Date(plannedStartDateIso).getTime();
+    const shouldHide = started || countdownFinished;
+    countdown.hidden = shouldHide;
+    countdown.classList.toggle('is-finished', shouldHide);
+}
+
+function renderEmptyState(container, title, text) {
+    if (!container) return;
+    const card = document.createElement('article');
+    card.className = 'empty-state';
+    card.innerHTML = `<h3>${title}</h3><p>${text}</p>`;
+    container.appendChild(card);
 }
 function formatHoursTick(hoursValue) {
     const totalMinutes = Math.max(0, Math.round((Number(hoursValue) || 0) * 60));
@@ -355,7 +872,8 @@ function addMapControl() {
     });
     mapInstance.addControl(new MapControl({ position: 'topright' }));
 }
-function initMap() {
+function initMap(options = {}) {
+    const withGpx = options.withGpx !== false;
     if (mapInstance) return;
     if (typeof L === 'undefined') return;
     ensureLeafletAssets();
@@ -364,6 +882,7 @@ function initMap() {
     activeLayer = tileProviders.osm.addTo(mapInstance);
     L.control.zoom({ position: 'topright' }).addTo(mapInstance);
     addMapControl();
+    if (!withGpx) return;
     const gpxUrl = 'data/NorthLine_3.gpx';
     try {
         new L.GPX(gpxUrl, {
@@ -436,56 +955,68 @@ function refreshMapRoute(points) {
 }
 function updateLiveUI(summary) {
     if (!summary) return;
-    document.getElementById('distance').textContent = `${summary.totalDistance.toFixed(1)} km`;
+    const distanceText = summary.totalDistance === 0 ? '0' : summary.totalDistance.toFixed(1);
+    document.getElementById('distance').textContent = `${distanceText} km`;
     const blendedRemaining = computeBlendedRemaining(summary);
     const remaining = blendedRemaining !== null ? blendedRemaining : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
     const completion = computeDynamicProgress(summary.totalDistance, remaining);
+    const completionText = completion === 0 ? '0%' : `${completion.toFixed(1)}%`;
     document.getElementById('remaining').textContent = `${remaining.toFixed(1)} km`;
-    document.getElementById('completion').textContent = `${completion.toFixed(1)}%`;
-    document.getElementById('completionText').textContent = `${completion.toFixed(1)}%`;
+    document.getElementById('completion').textContent = completionText;
+    document.getElementById('completionText').textContent = completionText;
     document.getElementById('speed').textContent = `${summary.speed.toFixed(1)} km/h`;
-    document.getElementById('altitude').textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
-    document.getElementById('lastUpdate').textContent = formatRelativeDate(summary.lastPoint.orario);
-    document.getElementById('time').textContent = formatTime(summary.duration);
+    const altitude = Number(summary.lastPoint?.altitudine?.metri ?? 0);
+    document.getElementById('altitude').textContent = `${altitude.toFixed(0)} m`;
+    document.getElementById('lastUpdate').textContent = summary.lastPoint?.orario ? formatRelativeDate(summary.lastPoint.orario) : '0 s';
+    document.getElementById('time').textContent = summary.duration > 0 ? formatTime(summary.duration) : '0';
     document.getElementById('elevation').textContent = `${Math.round(summary.elevationGain)} m`;
     document.getElementById('steps').textContent = computeEstimatedSteps(summary.totalDistance, summary.duration).toLocaleString();
     document.getElementById('progressBar').style.width = `${completion.toFixed(1)}%`;
 }
 
 function updateVisitorDistance(lastPoint) {
-    if (!navigator.geolocation) {
-        document.getElementById('visitorDistance').textContent = 'Non supportato';
+    const label = document.getElementById('visitorDistanceLabel');
+    const visitorDistanceField = document.getElementById('visitorDistance');
+    const startCoord = gpxCoords.length ? gpxCoords[0] : null;
+    const hasLivePosition = Number.isFinite(lastPoint?.coordinate?.lat) && Number.isFinite(lastPoint?.coordinate?.lon);
+    const referenceLat = hasLivePosition ? lastPoint.coordinate.lat : startCoord?.lat;
+    const referenceLon = hasLivePosition ? lastPoint.coordinate.lon : startCoord?.lng;
+
+    if (label) {
+        label.textContent = hasLivePosition ? 'Distanza visitatore' : 'Distanza dalla partenza';
+    }
+
+    if (!Number.isFinite(referenceLat) || !Number.isFinite(referenceLon)) {
+        if (visitorDistanceField) visitorDistanceField.textContent = '0 km';
         return;
     }
+
+    if (!navigator.geolocation) {
+        if (visitorDistanceField) visitorDistanceField.textContent = 'Non supportato';
+        return;
+    }
+
     navigator.geolocation.getCurrentPosition(position => {
         showVisitorMarker(position);
-        const R = 6371e3;
-        const toRad = deg => deg * Math.PI / 180;
-        const lat1 = toRad(position.coords.latitude);
-        const lat2 = toRad(lastPoint.coordinate.lat);
-        const dLat = toRad(lastPoint.coordinate.lat - position.coords.latitude);
-        const dLon = toRad(lastPoint.coordinate.lon - position.coords.longitude);
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c;
-        document.getElementById('visitorDistance').textContent = `${(distance / 1000).toFixed(1)} km`;
+        const distanceKm = haversineKm(position.coords.latitude, position.coords.longitude, referenceLat, referenceLon);
+        if (visitorDistanceField) visitorDistanceField.textContent = `${distanceKm.toFixed(1)} km`;
     }, () => {
-        document.getElementById('visitorDistance').textContent = 'Permesso negato';
+        if (visitorDistanceField) visitorDistanceField.textContent = 'Permesso negato';
     });
 }
 async function initLivePage() {
     initializeTheme();
+    updateLiveUI(buildLivePreStartSummary());
     await ensureGpxDataLoaded();
     initMap();
     buildNav();
-    document.getElementById('panelToggle')?.addEventListener('click', () => document.getElementById('statsContent')?.classList.toggle('open'));
     const points = await fetchPoints();
-    const summary = buildSummary(points);
+    const summary = buildSummary(points) || buildLivePreStartSummary();
     updateLiveUI(summary);
-    if (summary) {
+    if (summary.lastPoint) {
         refreshMapRoute(summary.points);
-        updateVisitorDistance(summary.lastPoint);
     }
+    updateVisitorDistance(summary.lastPoint);
     // center-live button
     const centerBtn = document.getElementById('centerLiveBtn');
     if (centerBtn) {
@@ -509,20 +1040,22 @@ async function initLivePage() {
     }
     setInterval(async () => {
         const points = await fetchPoints();
-        const summary = buildSummary(points);
+        const summary = buildSummary(points) || buildLivePreStartSummary();
         updateLiveUI(summary);
-        if (summary) {
+        if (summary.lastPoint) {
             refreshMapRoute(summary.points);
-            updateVisitorDistance(summary.lastPoint);
         }
+        updateVisitorDistance(summary.lastPoint);
     }, 8000);
 }
 async function initHomePage() {
     initializeTheme();
+    initHomeCountdown();
     await ensureGpxDataLoaded();
     const points = await fetchPoints();
-    const summary = buildSummary(points);
-    if (summary) updateHomeSummary(summary);
+    const summary = buildSummary(points) || buildHomePreStartSummary();
+    updateHomeSummary(summary);
+    updateHomeCountdownVisibility(summary);
 }
 function buildChartData(points, summaryContext = null) {
     const safePoints = points
@@ -639,34 +1172,49 @@ function buildChartData(points, summaryContext = null) {
 }
 async function initDashboardPage() {
     initializeTheme();
+    updateDashboardSummary(buildDashboardPreStartSummary());
     await ensureGpxDataLoaded();
     const points = await fetchPoints();
-    const summary = buildSummary(points) || { totalDistance: 0, speed: 0, elevationGain: 0, duration: 0, progress: 0, lastPoint: { altitudine: { metri: 0 } } };
-    const metricDistance = document.getElementById('metricDistance');
-    const metricRemaining = document.getElementById('metricRemaining');
-    const metricCompletion = document.getElementById('metricCompletion');
-    const metricSpeed = document.getElementById('metricSpeed');
-    const metricAltitude = document.getElementById('metricAltitude');
-    const metricElevation = document.getElementById('metricElevation');
-    const metricTime = document.getElementById('metricTime');
-    if (metricDistance) metricDistance.textContent = `${summary.totalDistance.toFixed(1)} km`;
-    const blended = computeBlendedRemaining(summary);
-    const remaining = blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
-    const completion = computeDynamicProgress(summary.totalDistance, remaining);
-    if (metricRemaining) metricRemaining.textContent = `${remaining.toFixed(1)} km`;
-    if (metricCompletion) metricCompletion.textContent = `${completion.toFixed(1)}%`;
-    if (metricSpeed) metricSpeed.textContent = `${summary.speed.toFixed(1)} km/h`;
-    if (metricAltitude) metricAltitude.textContent = `${summary.lastPoint.altitudine.metri.toFixed(0)} m`;
-    if (metricElevation) metricElevation.textContent = `${Math.round(summary.elevationGain)} m`;
-    if (metricTime) metricTime.textContent = formatTime(summary.duration);
+    const summary = buildSummary(points) || buildDashboardPreStartSummary();
+    updateDashboardSummary(summary);
     const xAxisSelect = document.getElementById('chartXAxisMode');
     const storedXAxisMode = localStorage.getItem('northline-chart-x-axis');
     const xAxisMode = storedXAxisMode === 'time' ? 'time' : 'distance';
     if (xAxisSelect) xAxisSelect.value = xAxisMode;
-    const chartData = buildChartData(
-        points.length ? points : [{ velocita: { km_h: 0 }, altitudine: { metri: 0 }, distanza: { km: 0 }, orario: new Date().toISOString() }],
-        summary
-    );
+    const hasLiveData = points.length > 0;
+    const chartCards = Array.from(document.querySelectorAll('.chart-grid .metric-card'));
+    const setChartsEmpty = empty => {
+        chartCards.forEach(card => {
+            card.classList.toggle('chart-empty', empty);
+            let note = card.querySelector('.chart-empty-note');
+            if (empty && !note) {
+                note = document.createElement('p');
+                note.className = 'chart-empty-note';
+                note.textContent = 'Grafico disponibile alla partenza.';
+                card.appendChild(note);
+            }
+            if (!empty && note) note.remove();
+            const canvas = card.querySelector('canvas');
+            if (empty && canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        });
+    };
+
+    if (xAxisSelect) xAxisSelect.disabled = !hasLiveData;
+
+    if (!hasLiveData) {
+        Object.keys(chartInstances).forEach(key => {
+            chartInstances[key]?.destroy();
+            delete chartInstances[key];
+        });
+        setChartsEmpty(true);
+        return;
+    }
+
+    setChartsEmpty(false);
+    const chartData = buildChartData(points, summary);
 
     const renderCharts = axisMode => {
         const mode = axisMode === 'time' ? 'time' : 'distance';
@@ -699,75 +1247,530 @@ async function initDashboardPage() {
 }
 async function initGalleryPage() {
     initializeTheme();
-    const items = [
-        { title: 'Punto panoramico', location: 'Monte Generoso', tag: 'montagna', description: 'Vista sul Lago di Lugano al tramonto.', image: 'assets/preview.png' },
-        { title: 'Checkpoint', location: 'Passo del San Gottardo', tag: 'checkpoint', description: 'Bivacco e ristoro lungo il percorso.', image: 'assets/preview.png' },
-        { title: 'Campo notte', location: 'Valle Alpina', tag: 'bivacco', description: 'Tenda montata a quota 2100 m.', image: 'assets/preview.png' },
-        { title: 'City stop', location: 'Mendrisio', tag: 'città', description: 'Pausa tecnica prima del tratto alpino.', image: 'assets/preview.png' }
-    ];
+    const items = await loadUnifiedMediaItems();
     const grid = document.querySelector('.gallery-grid');
-    const modal = document.querySelector('.modal-backdrop');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalLocation = document.getElementById('modalLocation');
-    const modalDescription = document.getElementById('modalDescription');
-    const modalImage = document.getElementById('modalImage');
-    items.forEach(item => {
+    if (!grid) return;
+
+    if (!items.length) {
+        renderEmptyState(
+            grid,
+            'Galleria vuota',
+            'Nessuna immagine disponibile al momento. Le foto verranno aggiunte dalla prossima pubblicazione.'
+        );
+        await initGalleryPhotoMap([]);
+        return;
+    }
+
+    useMediaModal(items);
+
+    items.forEach((item, index) => {
         const card = document.createElement('article');
         card.className = 'gallery-item';
-        card.dataset.filter = item.tag;
-        card.innerHTML = `<img src="${item.image}" alt="${item.title}"><div class="gallery-meta"><h3>${item.title}</h3><p>${item.location}</p></div>`;
+        card.innerHTML = `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.title)}"><div class="gallery-meta"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.location || item.source || '')}</p></div>`;
         card.addEventListener('click', () => {
-            modalTitle.textContent = item.title;
-            modalLocation.textContent = item.location;
-            modalDescription.textContent = item.description;
-            modalImage.src = item.image;
-            modal.classList.add('active');
+            openMediaModal(index);
         });
         grid.appendChild(card);
     });
-    document.querySelectorAll('.gallery-filter button').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.gallery-item').forEach(card => {
-                card.style.display = button.dataset.filter === 'all' || card.dataset.filter === button.dataset.filter ? 'grid' : 'none';
-            });
-        });
-    });
-    document.querySelector('.modal-close')?.addEventListener('click', () => modal.classList.remove('active'));
-    modal.addEventListener('click', event => { if (event.target === modal) modal.classList.remove('active'); });
+    await initGalleryPhotoMap(items);
 }
 async function initDiaryPage() {
     initializeTheme();
-    const entries = [
-        { title: 'Giorno 1 – Partenza', date: '07/07/2026', km: '18', text: 'Partenza da Mendrisio, clima fresco e arrivo al primo bivacco.', image: 'assets/preview.png' },
-        { title: 'Giorno 3 – Passo del San Gottardo', date: '09/07/2026', km: '36', text: 'Attraversamento del passo con panorami spettacolari.', image: 'assets/preview.png' },
-        { title: 'Giorno 5 – Valle alpina', date: '11/07/2026', km: '45', text: 'Sentieri tecnici e momenti di avventura pura.', image: 'assets/preview.png' }
-    ];
+    const [diaryEntries, timelineEntries] = await Promise.all([
+        loadCollection('diary'),
+        loadCollection('timeline')
+    ]);
+    const entries = buildUnifiedDiaryTimelineEntries(diaryEntries, timelineEntries);
     const container = document.querySelector('.diary-list');
+    if (!container) return;
+
+    if (!entries.length) {
+        renderEmptyState(
+            container,
+            'Diario vuoto',
+            'Ancora nessuna voce pubblicata. I racconti e gli aggiornamenti cronologici verranno inseriti durante il percorso.'
+        );
+        return;
+    }
+
     entries.forEach(entry => {
         const article = document.createElement('article');
         article.className = 'diary-entry';
-        article.innerHTML = `<img src="${entry.image}" alt="${entry.title}"><div><time>${entry.date}</time><h3>${entry.title}</h3><p><strong>${entry.km} km</strong> · ${entry.text}</p></div>`;
+        article.innerHTML = `${entry._image ? `<img src="${escapeHtml(entry._image)}" alt="${escapeHtml(entry._title)}">` : ''}<div><time>${escapeHtml(entry._subtitle)}</time><h3>${escapeHtml(entry._title)}</h3><p>${escapeHtml(entry._text)}</p></div>`;
         container.appendChild(article);
     });
 }
 async function initTimelinePage() {
-    initializeTheme();
-    const events = [
-        { time: '07:30', title: 'Partenza', description: 'Inizio del percorso con entusiasmo.' },
-        { time: '09:10', title: 'Mendrisio', description: 'Primo checkpoint e colazione veloce.' },
-        { time: '11:45', title: 'Panorama', description: 'Sosta per ammirare le vette.' },
-        { time: '14:00', title: 'Monte Generoso', description: 'Salita al crinale e vista sul lago.' },
-        { time: '18:20', title: 'Tramonto', description: 'Fine giornata con colori mozzafiato.' },
-        { time: '20:30', title: 'Campo notte', description: 'Arrivo al bivacco e riposo.' }
-    ];
-    const list = document.querySelector('.timeline-list');
-    events.forEach(event => {
+    await initDiaryPage();
+}
+async function renderAdminCollection(type) {
+    const list = document.querySelector(`[data-admin-list="${type}"]`);
+    if (!list) return;
+    const items = await loadCollection(type);
+    list.innerHTML = '';
+    if (!items.length) {
+        renderEmptyState(list, 'Nessun contenuto', 'Questa sezione e ancora vuota.');
+        return;
+    }
+    items.forEach((item, index) => {
         const article = document.createElement('article');
-        article.className = 'timeline-event';
-        article.innerHTML = `<time>${event.time}</time><h3>${event.title}</h3><p>${event.description}</p>`;
-        article.addEventListener('click', () => alert(`Sposta la mappa su: ${event.title}`));
-        list.appendChild(article);
+        article.className = 'admin-item-card';
+        const meta = document.createElement('div');
+        meta.className = 'admin-item-meta';
+        const heading = document.createElement('h3');
+        heading.textContent = item.title || item.location || item.time || `Elemento ${index + 1}`;
+        const info = document.createElement('p');
+        info.textContent = type === 'gallery'
+            ? `${item.tag || 'senza tag'} · ${item.location || 'nessuna localita'}${item.date ? ` · ${item.date}${item.time ? ` ${item.time}` : ''}` : ''}${item.km ? ` · ${item.km} km` : ''}`
+            : type === 'diary'
+                ? `${item.date || 'nessuna data'} · ${item.km || '0'} km`
+                : `${item.date || 'nessuna data'} ${item.time || '--:--'} · ${item.description || ''}`;
+        meta.append(heading, info);
+        const actions = document.createElement('div');
+        actions.className = 'admin-item-actions';
+        const upButton = document.createElement('button');
+        upButton.type = 'button';
+        upButton.className = 'button secondary';
+        upButton.textContent = 'Su';
+        upButton.disabled = index === 0;
+        upButton.addEventListener('click', async () => {
+            await moveCollectionItem(type, item.id, 'up');
+            await renderAdminCollection(type);
+        });
+        const downButton = document.createElement('button');
+        downButton.type = 'button';
+        downButton.className = 'button secondary';
+        downButton.textContent = 'Giu';
+        downButton.disabled = index === items.length - 1;
+        downButton.addEventListener('click', async () => {
+            await moveCollectionItem(type, item.id, 'down');
+            await renderAdminCollection(type);
+        });
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'button ghost';
+        deleteButton.textContent = 'Cancella';
+        deleteButton.addEventListener('click', async () => {
+            await deleteCollectionItem(type, item.id);
+            await renderAdminCollection(type);
+        });
+        actions.append(upButton, downButton, deleteButton);
+        article.append(meta, actions);
+        list.append(article);
     });
+}
+function formatAdminNow() {
+    const now = new Date();
+    const pad = value => String(value).padStart(2, '0');
+    return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+function setAdminFeedbackMessage(element, message, isError = false) {
+    if (!element) return;
+    element.textContent = message || '';
+    element.classList.toggle('is-error', Boolean(message) && isError);
+}
+function showAdminSaveNotice(message, isError = false) {
+    setAdminFeedbackMessage(document.getElementById('adminSaveNotice'), message, isError);
+}
+async function reverseGeocodeNearestLocation(lat, lng) {
+    const endpoint = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=14&addressdetails=1`;
+    const response = await fetch(endpoint, {
+        headers: {
+            'Accept': 'application/json',
+            'Accept-Language': 'it'
+        }
+    });
+    if (!response.ok) throw new Error('Servizio localita non disponibile');
+    const payload = await response.json();
+    const address = payload?.address || {};
+    const primary = address.city || address.town || address.village || address.hamlet || address.suburb || address.municipality || '';
+    const secondary = address.state || address.county || '';
+    const compact = [primary, secondary].filter(Boolean).join(', ');
+    if (compact) return compact;
+    const fallback = String(payload?.display_name || '').split(',').slice(0, 2).join(',').trim();
+    return fallback || 'Localita non trovata';
+}
+function initAdminFormHelpers() {
+    const form = document.querySelector('[data-admin-form="gallery"]');
+    if (!form) return;
+    const status = document.getElementById('adminGalleryGeoStatus');
+    const latField = form.querySelector('[name="lat"]');
+    const lngField = form.querySelector('[name="lng"]');
+    const locationField = form.querySelector('[name="location"]');
+    const dateField = form.querySelector('[name="date"]');
+    const timeField = form.querySelector('[name="time"]');
+    const kmField = form.querySelector('[name="km"]');
+    const geoButton = document.getElementById('adminGalleryGeoBtn');
+    const mapButton = document.getElementById('adminGalleryMapBtn');
+    const nowButton = document.getElementById('adminGalleryNowBtn');
+    const kmNowButton = document.getElementById('adminGalleryKmNowBtn');
+    const wrap = document.getElementById('adminGalleryMapPickerWrap');
+    const mapId = 'adminGalleryMapPicker';
+
+    let cachedCurrentCoords = null;
+    let pickerMap = null;
+    let pickerMarker = null;
+    let reverseRequestId = 0;
+
+    const setStatus = text => {
+        if (status) status.textContent = text;
+    };
+    const setCoords = async (lat, lng, labelPrefix = 'Posizione impostata') => {
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        if (latField) latField.value = String(lat);
+        if (lngField) lngField.value = String(lng);
+        setStatus(`${labelPrefix}: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        if (!locationField) return;
+        locationField.value = 'Ricerca localita...';
+        const reqId = ++reverseRequestId;
+        try {
+            const locality = await reverseGeocodeNearestLocation(lat, lng);
+            if (reqId !== reverseRequestId) return;
+            locationField.value = locality;
+            setStatus(`${labelPrefix}: ${lat.toFixed(5)}, ${lng.toFixed(5)} · ${locality}`);
+        } catch {
+            if (reqId !== reverseRequestId) return;
+            locationField.value = 'Localita non trovata';
+            setStatus(`${labelPrefix}: ${lat.toFixed(5)}, ${lng.toFixed(5)} · localita non disponibile`);
+        }
+    };
+    const requestCurrentPosition = (onSuccess, onError) => {
+        if (!navigator.geolocation) {
+            onError?.();
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(position => {
+            cachedCurrentCoords = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            onSuccess?.(cachedCurrentCoords);
+        }, () => {
+            onError?.();
+        }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    };
+
+    if (form.dataset.preloadedGeo !== 'true') {
+        requestCurrentPosition(coords => {
+            const hasLat = Number.isFinite(Number(latField?.value));
+            const hasLng = Number.isFinite(Number(lngField?.value));
+            if (!hasLat || !hasLng) {
+                setCoords(coords.lat, coords.lng, 'Posizione attuale pronta');
+            } else {
+                setStatus('Posizione attuale pronta');
+            }
+        }, () => {
+            setStatus('Posizione attuale non disponibile');
+        });
+        form.dataset.preloadedGeo = 'true';
+    }
+
+    if (nowButton && nowButton.dataset.bound !== 'true') {
+        nowButton.addEventListener('click', () => {
+            const now = new Date();
+            const pad = value => String(value).padStart(2, '0');
+            if (dateField) dateField.value = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+            if (timeField) timeField.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        });
+        nowButton.dataset.bound = 'true';
+    }
+
+    if (kmNowButton && kmNowButton.dataset.bound !== 'true') {
+        kmNowButton.addEventListener('click', async () => {
+            if (!kmField) return;
+            const original = kmNowButton.textContent;
+            kmNowButton.disabled = true;
+            kmNowButton.textContent = 'Carico...';
+            try {
+                const points = await fetchPoints();
+                const lastPoint = points[points.length - 1];
+                const km = Number(lastPoint?.distanza?.km ?? 0);
+                kmField.value = Number.isFinite(km) ? (km === 0 ? '0' : km.toFixed(1)) : '0';
+            } catch {
+                setStatus('Km attuale non disponibile');
+            } finally {
+                kmNowButton.disabled = false;
+                kmNowButton.textContent = original || 'Km attuale';
+            }
+        });
+        kmNowButton.dataset.bound = 'true';
+    }
+
+    if (geoButton && geoButton.dataset.bound !== 'true') {
+        geoButton.addEventListener('click', () => {
+            if (cachedCurrentCoords) {
+                setCoords(cachedCurrentCoords.lat, cachedCurrentCoords.lng, 'Posizione attuale');
+                return;
+            }
+            geoButton.disabled = true;
+            geoButton.textContent = 'Rilevo...';
+            requestCurrentPosition(coords => {
+                setCoords(coords.lat, coords.lng, 'Posizione attuale');
+                geoButton.disabled = false;
+                geoButton.textContent = 'Usa posizione attuale';
+            }, () => {
+                setStatus('Posizione non disponibile');
+                geoButton.disabled = false;
+                geoButton.textContent = 'Usa posizione attuale';
+            });
+        });
+        geoButton.dataset.bound = 'true';
+    }
+
+    const ensurePickerMap = () => {
+        if (!wrap) return;
+        if (pickerMap) {
+            setTimeout(() => pickerMap.invalidateSize(), 80);
+            return;
+        }
+        if (typeof L === 'undefined') {
+            setStatus('Cartina non disponibile');
+            return;
+        }
+        const startCoords = cachedCurrentCoords || {
+            lat: Number(latField?.value ?? Number.NaN),
+            lng: Number(lngField?.value ?? Number.NaN)
+        };
+        const hasStartCoords = Number.isFinite(startCoords.lat) && Number.isFinite(startCoords.lng);
+        pickerMap = L.map(mapId, { zoomControl: true }).setView(
+            hasStartCoords ? [startCoords.lat, startCoords.lng] : defaultCenter,
+            hasStartCoords ? 12 : 11
+        );
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(pickerMap);
+        if (hasStartCoords) {
+            pickerMarker = L.marker([startCoords.lat, startCoords.lng]).addTo(pickerMap);
+        }
+        pickerMap.on('click', event => {
+            const { lat, lng } = event.latlng;
+            if (!pickerMarker) pickerMarker = L.marker([lat, lng]).addTo(pickerMap);
+            else pickerMarker.setLatLng([lat, lng]);
+            setCoords(lat, lng, 'Posizione scelta su cartina');
+        });
+    };
+
+    if (mapButton && mapButton.dataset.bound !== 'true') {
+        mapButton.addEventListener('click', () => {
+            if (!wrap) return;
+            const isOpening = wrap.hidden;
+            wrap.hidden = !isOpening;
+            mapButton.textContent = isOpening ? 'Chiudi cartina' : 'Scegli su cartina';
+            if (isOpening) ensurePickerMap();
+        });
+        mapButton.dataset.bound = 'true';
+    }
+
+    document.querySelectorAll('[data-tag-suggestion]').forEach(button => {
+        if (button.dataset.bound === 'true') return;
+        button.addEventListener('click', () => {
+            const galleryTagInput = document.querySelector('[data-admin-form="gallery"] [name="tag"]');
+            if (!galleryTagInput) return;
+            galleryTagInput.value = button.dataset.tagSuggestion || '';
+            galleryTagInput.focus();
+        });
+        button.dataset.bound = 'true';
+    });
+}
+async function handleAdminFormSubmit(type, form) {
+    const items = await loadCollection(type);
+    const id = createRecordId(type);
+    const lat = Number(form.lat?.value ?? Number.NaN);
+    const lng = Number(form.lng?.value ?? Number.NaN);
+    const geo = Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    if (type === 'gallery') {
+        const image = await readFileAsDataUrl(form.querySelector('[name="image"]')?.files?.[0]);
+        items.push({
+            id,
+            title: form.title.value.trim(),
+            date: form.date.value.trim(),
+            time: form.time.value.trim(),
+            km: form.km.value.trim(),
+            location: form.location.value.trim(),
+            tag: form.tag.value.trim(),
+            description: form.description.value.trim(),
+            image,
+            geo
+        });
+    }
+    await persistCollection(type, items);
+    form.reset();
+    const nearestBlock = form.closest('.admin-block');
+    nearestBlock?.querySelectorAll('.admin-inline-note').forEach(note => {
+        note.textContent = 'Posizione non impostata';
+    });
+    await renderAdminCollection(type);
+}
+function bindAdminForm(type) {
+    const form = document.querySelector(`[data-admin-form="${type}"]`);
+    if (!form || form.dataset.bound === 'true') return;
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        try {
+            await handleAdminFormSubmit(type, form);
+            showAdminSaveNotice('Salvataggio completato su Firebase.');
+        } catch (error) {
+            showAdminSaveNotice(`Salvataggio fallito: ${error.message || 'errore sconosciuto'}.`, true);
+        }
+    });
+    form.dataset.bound = 'true';
+}
+function showAdminState(unlocked) {
+    const locked = document.getElementById('adminLocked');
+    const app = document.getElementById('adminApp');
+    if (locked) locked.hidden = unlocked;
+    if (app) app.hidden = !unlocked;
+}
+function initAdminPage() {
+    initializeTheme();
+    showAdminState(isAdminAuthenticated());
+    const loginForm = document.getElementById('adminLoginForm');
+    const errorBox = document.getElementById('adminLoginError');
+    const successBox = document.getElementById('adminLoginSuccess');
+    const auth = getFirebaseAuth();
+    const modeLabel = document.getElementById('adminModeLabel');
+    const firebaseReady = Boolean(auth && hasUsableFirebaseConfig());
+    if (modeLabel) {
+        modeLabel.textContent = firebaseReady
+            ? 'Autenticazione Firebase attiva. I salvataggi avvengono solo su Firebase.'
+            : 'Configurazione Firebase non valida: accesso admin non disponibile finche non completi firebase-config.js.';
+    }
+    loginForm?.addEventListener('submit', event => {
+        event.preventDefault();
+        const email = loginForm.querySelector('[name="email"]')?.value || '';
+        const password = loginForm.querySelector('[name="password"]')?.value || '';
+        if (errorBox) errorBox.textContent = '';
+        setAdminFeedbackMessage(successBox, '', false);
+
+        if (!firebaseReady) {
+            if (errorBox) errorBox.textContent = 'Completa la configurazione Firebase per poter accedere.';
+            return;
+        }
+
+        if (!email || !password) {
+            if (errorBox) errorBox.textContent = 'Inserisci email e password Firebase.';
+            return;
+        }
+
+        const unlockAdmin = async () => {
+            setAdminAuthenticated(true);
+            if (errorBox) errorBox.textContent = '';
+            setAdminFeedbackMessage(successBox, 'Accesso riuscito: pannello admin sbloccato.', false);
+            showAdminState(true);
+            initAdminFormHelpers();
+            bindAdminForm('gallery');
+            await renderAdminCollection('gallery');
+            loginForm.reset();
+        };
+
+        auth.signInWithEmailAndPassword(email, password)
+            .then(unlockAdmin)
+            .catch(error => {
+                if (errorBox) errorBox.textContent = `Login Firebase fallito: ${error.message}`;
+            });
+    });
+    document.getElementById('adminLogoutBtn')?.addEventListener('click', () => {
+        getFirebaseAuth()?.signOut().catch(() => {});
+        setAdminAuthenticated(false);
+        showAdminSaveNotice('', false);
+        setAdminFeedbackMessage(successBox, '', false);
+        showAdminState(false);
+    });
+    if (isAdminAuthenticated()) {
+        initAdminFormHelpers();
+        bindAdminForm('gallery');
+        renderAdminCollection('gallery');
+    }
+}
+function getPhotoMarkerIcon(item, zoomLevel) {
+    const zoom = Number.isFinite(zoomLevel) ? zoomLevel : 12;
+    const size = Math.max(28, Math.min(74, 30 + ((zoom - 10) * 3)));
+    return L.divIcon({
+        className: 'photo-thumb-marker',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+        html: `<span class="photo-thumb-wrap" style="width:${size}px;height:${size}px;"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.title)}"></span>`
+    });
+}
+function bindPhotoMapFullscreen() {
+    const fullscreenBtn = document.getElementById('galleryPhotoMapFullscreenBtn');
+    const mapWrap = document.querySelector('.map-wrap-photo-gallery');
+    if (!fullscreenBtn || !mapWrap) return;
+    fullscreenBtn.addEventListener('click', () => {
+        mapWrap.classList.toggle('map-wrap--fullscreen');
+        const isFullscreen = mapWrap.classList.contains('map-wrap--fullscreen');
+        fullscreenBtn.textContent = isFullscreen ? '🡼' : '⛶';
+        fullscreenBtn.title = isFullscreen ? 'Esci da schermo intero' : 'Mappa a schermo intero';
+        setTimeout(() => mapInstance?.invalidateSize(), 120);
+    });
+}
+async function initGalleryPhotoMap(items) {
+    initMap();
+    if (!mapInstance) return;
+    bindPhotoMapFullscreen();
+
+    const statusLabel = document.getElementById('galleryPhotoMapStatus');
+    const geoItems = items.filter(item => item.geo);
+    const points = await fetchPoints();
+
+    if (!geoItems.length) {
+        if (statusLabel) {
+            statusLabel.textContent = items.length
+                ? 'Nessuna foto con posizione disponibile.'
+                : 'Nessuna immagine disponibile.';
+        }
+        if (points.length) refreshMapRoute(points);
+        return;
+    }
+
+    if (points.length) refreshMapRoute(points);
+
+    const bounds = L.latLngBounds(geoItems.map(item => [item.geo.lat, item.geo.lng]));
+    if (routeLine && typeof routeLine.getBounds === 'function') {
+        bounds.extend(routeLine.getBounds());
+    }
+    mapInstance.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+
+    const clusterGroup = typeof L.markerClusterGroup === 'function'
+        ? L.markerClusterGroup({
+            showCoverageOnHover: false,
+            spiderfyOnMaxZoom: true,
+            maxClusterRadius: 48
+        })
+        : L.layerGroup();
+
+    photoMapState.clusterGroup = clusterGroup;
+    photoMapState.markerById.clear();
+
+    useMediaModal(geoItems, currentItem => {
+        if (!currentItem?.geo || !mapInstance) return;
+        mapInstance.panTo([currentItem.geo.lat, currentItem.geo.lng], { animate: true, duration: 0.45 });
+        const marker = photoMapState.markerById.get(currentItem.id);
+        if (marker?.openPopup) marker.openPopup();
+    });
+
+    geoItems.forEach((item, index) => {
+        const marker = L.marker([item.geo.lat, item.geo.lng], {
+            icon: getPhotoMarkerIcon(item, mapInstance.getZoom())
+        });
+        marker.bindPopup(`<strong>${escapeHtml(item.title)}</strong><br>${escapeHtml(item.location || '')}`);
+        marker.on('click', () => openMediaModal(index));
+        photoMapState.markerById.set(item.id, marker);
+        clusterGroup.addLayer(marker);
+    });
+
+    if (clusterGroup.addTo) clusterGroup.addTo(mapInstance);
+
+    mapInstance.on('zoomend', () => {
+        const zoom = mapInstance.getZoom();
+        photoMapState.markerById.forEach((marker, id) => {
+            const mediaItem = geoItems.find(item => item.id === id);
+            if (!mediaItem) return;
+            marker.setIcon(getPhotoMarkerIcon(mediaItem, zoom));
+        });
+    });
+
+    if (statusLabel) {
+        statusLabel.textContent = `${geoItems.length} foto geolocalizzate · percorso live visibile`;
+    }
 }
 async function initReplayPage() {
     initializeTheme();
@@ -810,18 +1813,18 @@ async function initProgressPage() {
     initializeTheme();
     const points = await fetchPoints();
     const summary = buildSummary(points) || { totalDistance: 0, progress: 0 };
-    const badges = [
-        { title: '100 km', value: 100 },
-        { title: '200 km', value: 200 },
-        { title: '500 km', value: 500 },
-        { title: '50%', value: 50 },
-        { title: '75%', value: 75 },
-        { title: '100%', value: 100 },
-        { title: 'Primo bivacco', value: 10 },
-        { title: 'Passo del San Gottardo', value: 30 },
-        { title: 'Quota massima raggiunta', value: 42 }
-    ];
+    const badges = [];
     const grid = document.querySelector('.badge-grid');
+
+    if (!badges.length) {
+        renderEmptyState(
+            grid,
+            'Badge non impostati',
+            'Nessun traguardo predefinito. Potrai aggiungere i badge quando vorrai iniziare il monitoraggio reale.'
+        );
+        return;
+    }
+
     badges.forEach(badge => {
         const article = document.createElement('article');
         article.className = 'badge-card';
@@ -848,6 +1851,7 @@ function initPage() {
         case 'gallery': initGalleryPage(); break;
         case 'diary': initDiaryPage(); break;
         case 'timeline': initTimelinePage(); break;
+        case 'admin': initAdminPage(); break;
         case 'replay': initReplayPage(); break;
         case 'progress': initProgressPage(); break;
         default: initializeTheme(); break;
