@@ -173,6 +173,11 @@ async function getGarminData() {
                 },
 
 
+                frequenza_cardiaca: {
+                    bpm: Number(p.heartRateBeatsPerMin)
+                },
+
+
                 tempo_trascorso: {
                     secondi: p.totalDurationSecs,
                     minuti: Number((p.totalDurationSecs / 60).toFixed(1))

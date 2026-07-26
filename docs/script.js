@@ -1,4 +1,4 @@
-﻿const firebaseURL = "https://northline-a4eaa-default-rtdb.europe-west1.firebasedatabase.app/lietrack/points.json";
+﻿const firebaseURL = "https://northline-a4eaa-default-rtdb.europe-west1.firebasedatabase.app/livetrack/points.json";
 const plannedStartDateIso = '2026-08-01T04:00:00+02:00';
 const contentDatabasePath = 'content';
 const trackerDataUrl = 'data/NorthLine_trackers.json';
@@ -73,12 +73,12 @@ const i18nCatalog = {
                 eyebrow: 'Analisi avanzata',
                 heading: 'Dashboard delle statistiche.',
                 description: 'Statistiche sportive complete con grafici per velocita, altitudine, andamento giornaliero e progressione.',
-                statLabels: ['Distanza percorsa', 'Distanza rimanente', 'Percentuale completata', 'Velocita attuale', 'Altitudine attuale', 'Dislivello positivo', 'Tempo totale'],
+                statLabels: ['Distanza percorsa', 'Distanza rimanente', 'Percentuale completata', 'Velocita attuale', 'Velocita media in movimento', 'Velocita media totale', 'Velocita massima', 'Altitudine attuale', 'Dislivello positivo', 'Tempo totale', 'Tempo in movimento', 'Frequenza cardiaca', 'Frequenza cardiaca media'],
                 chartsTitle: 'Grafici live',
                 xAxis: 'Asse X',
                 xDistance: 'Km',
                 xTime: 'Tempo',
-                chartTitles: ['Velocita', 'Altitudine', 'Km cumulati', 'Dislivello cumulato'],
+                chartTitles: ['Velocita', 'Altitudine', 'Frequenza cardiaca', 'Dislivello cumulato'],
                 chartEmpty: 'Grafico disponibile alla partenza.'
             },
             gallery: {
@@ -220,12 +220,12 @@ const i18nCatalog = {
                 eyebrow: 'Advanced analysis',
                 heading: 'Statistics dashboard.',
                 description: 'Complete sport statistics with charts for speed, altitude, daily trend, and progression.',
-                statLabels: ['Distance covered', 'Distance remaining', 'Completion rate', 'Current speed', 'Current altitude', 'Positive elevation', 'Total time'],
+                statLabels: ['Distance covered', 'Distance remaining', 'Completion rate', 'Current speed', 'Moving average speed', 'Total average speed', 'Max speed', 'Current altitude', 'Positive elevation', 'Total time', 'Moving time', 'Heart rate', 'Average heart rate'],
                 chartsTitle: 'Live charts',
                 xAxis: 'X axis',
                 xDistance: 'Km',
                 xTime: 'Time',
-                chartTitles: ['Speed', 'Altitude', 'Cumulative km', 'Cumulative elevation'],
+                chartTitles: ['Speed', 'Altitude', 'Heart rate', 'Cumulative elevation'],
                 chartEmpty: 'Chart available at departure.'
             },
             gallery: {
@@ -363,7 +363,7 @@ const i18nCatalog = {
                 title: 'NorthLine – Live-Karte',
                 eyebrow: 'Live-Karte',
                 heading: 'NorthLine live auf der Karte.',
-                description: 'Verfolge aktuelle Position, absolvierte Strecke und Athleten-Daten mit einer Vollbildkarte.',
+                description: 'Verfolge die aktuelle Position, die bereits zurückgelegte Strecke und die Statistiken des Athleten auf einer Vollbildkarte.',
                 statsEyebrow: 'Live-Statistiken',
                 statsTitle: 'Aktueller Status',
                 statsLabels: ['Distanz', 'Verbleibend', 'Abgeschlossen', 'Geschwindigkeit', 'Höhe', 'Letztes Update', 'Streckenfortschritt', 'Zeit', 'Höhenmeter', 'Schritte', 'Distanz vom Start'],
@@ -378,12 +378,12 @@ const i18nCatalog = {
                 eyebrow: 'Erweiterte Analyse',
                 heading: 'Statistik-Dashboard.',
                 description: 'Vollständige Sportstatistiken mit Diagrammen für Tempo, Höhe, Tagesverlauf und Fortschritt.',
-                statLabels: ['Gelaufene Distanz', 'Verbleibende Distanz', 'Abschlussquote', 'Aktuelle Geschwindigkeit', 'Aktuelle Höhe', 'Positiver Höhengewinn', 'Gesamtzeit'],
+                statLabels: ['Gelaufene Distanz', 'Verbleibende Distanz', 'Abschlussquote', 'Aktuelle Geschwindigkeit', 'Durchschnitt in Bewegung', 'Gesamtdurchschnitt', 'Maximale Geschwindigkeit', 'Aktuelle Höhe', 'Positiver Höhengewinn', 'Gesamtzeit', 'Bewegungszeit', 'Herzfrequenz', 'Durchschnittliche Herzfrequenz'],
                 chartsTitle: 'Live-Diagramme',
                 xAxis: 'X-Achse',
                 xDistance: 'Km',
                 xTime: 'Zeit',
-                chartTitles: ['Geschwindigkeit', 'Höhe', 'Kumulierte km', 'Kumulierter Höhengewinn'],
+                chartTitles: ['Geschwindigkeit', 'Höhe', 'Herzfrequenz', 'Kumulierter Höhengewinn'],
                 chartEmpty: 'Diagramm zum Start verfügbar.'
             },
             gallery: {
@@ -424,17 +424,17 @@ const i18nCatalog = {
                 title: 'NorthLine – Projekt',
                 eyebrow: 'NorthLine',
                 heading: 'Was ist das NorthLine-Projekt?',
-                intro: 'NorthLine ist viel mehr als eine einfache Schweiz-Durchquerung. Es ist ein Projekt aus dem Wunsch, Grenzen zu testen, das Land Schritt für Schritt zu erkunden und jeden Moment in Echtzeit zu teilen.',
+                intro: 'NorthLine ist weit mehr als eine einfache Durchquerung der Schweiz. Es ist ein Projekt, das aus dem Wunsch entstanden ist, sich selbst herauszufordern, das Land Schritt für Schritt zu erkunden und jeden Moment in Echtzeit zu teilen. Über eine vollständig von mir entwickelte Plattform kann jeder die Reise verfolgen, den Fortschritt beobachten, die Daten analysieren und dieses Abenteuer erleben, als wäre er selbst mit uns auf dem Weg.',
                 cardTitles: ['Was NorthLine ist', 'Motivation', 'Vorbereitung', 'Ausrüstung', 'Ernährung', 'Route', 'Support', 'Besonderheiten'],
                 cardTexts: [
-                    'NorthLine ist eine Süd-Nord-Durchquerung der Schweiz zu Fuss, etwa 333 km und über 6.000 positive Höhenmeter.',
-                    'Das Projekt entstand, um die Komfortzone zu verlassen und zu zeigen, dass Konstanz und Vorbereitung grosse Ziele erreichbar machen.',
-                    'Monate mit Training, Streckenstudium, Höhenanalyse, Logistik und Plattformentwicklung waren vor dem Start entscheidend.',
-                    'Jedes Gramm zählt: Der Rucksack kombiniert Leichtigkeit, Sicherheit und Autonomie mit GPS, Notfallausrüstung, Batterien und Funktionskleidung.',
-                    'Lange Gehtage brauchen eine sorgfältige Energieplanung mit Wasser, Mineralien und energiereicher Nahrung.',
-                    'Die Route führt durch Seen, Täler, Wälder, Alpenpässe und Höhenwege mit ständiger Anpassung an Gelände und Wetter.',
-                    'Auch wenn jeder Schritt zu Fuss ist, gibt es während der ganzen Reise laufende logistische und menschliche Unterstützung.',
-                    'NorthLine teilt ausserdem Fotos, lokale Geschichten und Begegnungen, damit die Community Teil des Abenteuers wird.'
+                    'NorthLine ist eine Weitwanderung, die die gesamte Schweiz von Süden nach Norden auf einer rund 333 Kilometer langen Strecke mit über 6\'000 Höhenmetern durchquert. Eine ununterbrochene Reise durch Ebenen, Täler, Alpenpässe und Berge, die in festgelegten Etappen bewältigt und vollständig live dokumentiert wird.',
+                    'Dieses Projekt entstand aus dem Wunsch, die eigene Komfortzone zu verlassen und zu zeigen, dass mit Ausdauer, Vorbereitung und Entschlossenheit selbst Herausforderungen gemeistert werden können, die zunächst unmöglich erscheinen. Es ist kein Wettkampf gegen andere, sondern ein persönlicher Weg, auf dem jeder Kilometer einen Erfolg darstellt und jede Schwierigkeit eine Gelegenheit ist, daran zu wachsen.',
+                    'Hinter jedem Wandertag stecken Monate der Vorbereitung. Körperliches Training, Wanderungen mit Rucksack, die Planung der Route, die Analyse der Höhenmeter, die logistische Organisation und die Entwicklung der Webplattform waren entscheidend, um am Starttag bestens vorbereitet zu sein.',
+                    'Jedes Gramm zählt. Der Rucksack wurde so zusammengestellt, dass er die optimale Balance zwischen Leichtigkeit, Sicherheit und Eigenständigkeit bietet. GPS, Notfallausrüstung, Batterien, funktionelle Kleidung und alles Weitere, was nötig ist, um den unterschiedlichsten Wetterbedingungen entlang der Strecke gewachsen zu sein.',
+                    'Viele Stunden pro Tag zu wandern erfordert ein sorgfältiges Energiemanagement. Während der Tour werden regelmässig Wasser, Mineralstoffe und energiereiche Lebensmittel aufgenommen, um die Leistungsfähigkeit konstant zu halten und die Erholung zwischen den einzelnen Etappen zu fördern.',
+                    'Die Strecke führt durch einige der eindrucksvollsten Landschaften der Schweiz: Seen, Täler, Wälder, Alpenpässe und hochalpine Wanderwege. Jede Etappe bringt neue Herausforderungen mit sich und erfordert eine ständige Anpassung an Gelände und Wetterbedingungen.',
+                    'Auch wenn jeder Schritt zu Fuss zurückgelegt wird, werde ich dieses Abenteuer nicht allein bestreiten. Während der gesamten Reise begleitet mich meine Freundin im Auto und kümmert sich um die logistische Unterstützung, die Versorgung mit Wasser und Verpflegung sowie alles, was für ein sicheres Weiterkommen erforderlich ist. Ihr wichtigster Beitrag ist jedoch menschlicher Natur: In den schwierigsten Momenten wird ihre Anwesenheit mich daran erinnern, warum es sich lohnt, weiterzugehen.',
+                    'NorthLine soll nicht nur Zahlen erzählen. Während der Reise werden Fotos, interessante Informationen über die bereisten Regionen, Begegnungen unterwegs und viele weitere Eindrücke geteilt, die dieses Erlebnis einzigartig machen. Ziel ist es, allen, die das Projekt verfolgen, das Gefühl zu geben, Teil des Abenteuers zu sein – Schritt für Schritt.'
                 ]
             },
             admin: { title: 'NorthLine – Admin' }
@@ -490,6 +490,15 @@ let latestLiveCoord = null;
 let latestVisitorCoord = null;
 let firebaseAppInstance = null;
 let routeMarkerGroup = null;
+const movingStatusRecoveryMs = 2 * 60 * 1000;
+const liveStatusControlRefreshMs = 15000;
+const homeRefreshMs = 5000;
+let liveStatusControlCache = {
+    forcedStatus: null,
+    updatedAt: null
+};
+let liveStatusControlLastFetchTs = 0;
+let liveStatusControlFetchPromise = null;
 const mediaModalState = {
     items: [],
     index: 0,
@@ -833,8 +842,13 @@ function hasUsableFirebaseConfig() {
 }
 function getFirebaseContentUrl(type) {
     const config = getFirebaseClientConfig();
-    if (!config?.databaseURL) return null;
-    return `${String(config.databaseURL).replace(/\/$/, '')}/${contentDatabasePath}/${type}.json`;
+    const configBase = String(config?.databaseURL || '').replace(/\/$/, '');
+    const fallbackBase = String(firebaseURL || '')
+        .replace(/\/$/, '')
+        .replace(/\/livetrack\/points\.json$/i, '');
+    const databaseBase = configBase || fallbackBase;
+    if (!databaseBase) return null;
+    return `${databaseBase}/${contentDatabasePath}/${type}.json`;
 }
 function ensureFirebaseClient() {
     const config = getFirebaseClientConfig();
@@ -1284,12 +1298,209 @@ async function fetchPoints() {
         const data = await response.json();
         if (!data) return [];
         return Object.values(data)
+            .map(point => {
+                const coordinate = point?.coordinate || point?.coordinates || null;
+                const speedMs = Number(point?.velocita?.m_s ?? point?.velocita?.mps ?? Number.NaN);
+                const speedKmh = Number(point?.velocita?.km_h ?? point?.velocita?.kmh ?? (Number.isFinite(speedMs) ? speedMs * 3.6 : Number.NaN));
+                return {
+                    ...point,
+                    coordinate,
+                    velocita: {
+                        ...(point?.velocita || {}),
+                        m_s: Number.isFinite(speedMs) ? speedMs : null,
+                        km_h: Number.isFinite(speedKmh) ? Number(speedKmh.toFixed(1)) : null
+                    },
+                    stato: point?.stato ?? point?.status ?? point?.pointStatus ?? null
+                };
+            })
             .filter(point => point && point.coordinate && Number.isFinite(point.coordinate.lat) && Number.isFinite(point.coordinate.lon) && point.distanza)
-            .sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+            .sort((a, b) => {
+                const aId = Number(a?.id ?? 0);
+                const bId = Number(b?.id ?? 0);
+                if (Number.isFinite(aId) && Number.isFinite(bId) && aId !== bId) return aId - bId;
+                return new Date(a?.orario ?? 0).getTime() - new Date(b?.orario ?? 0).getTime();
+            });
     } catch (error) {
         console.warn('Impossibile leggere i dati live:', error);
         return [];
     }
+}
+async function ensureLiveStatusControl(force = false) {
+    const now = Date.now();
+    if (!force && liveStatusControlLastFetchTs && (now - liveStatusControlLastFetchTs) < liveStatusControlRefreshMs) {
+        return liveStatusControlCache;
+    }
+    if (liveStatusControlFetchPromise) return liveStatusControlFetchPromise;
+
+    liveStatusControlFetchPromise = (async () => {
+        const previous = liveStatusControlCache;
+        const fallback = previous || { forcedStatus: null, updatedAt: null };
+        const publicUrl = getFirebaseContentUrl('liveStatus');
+        if (!publicUrl) {
+            liveStatusControlCache = fallback;
+            liveStatusControlLastFetchTs = Date.now();
+            return liveStatusControlCache;
+        }
+        try {
+            const response = await fetch(publicUrl, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const payload = await response.json();
+            const forcedStatusRaw = payload && typeof payload === 'object'
+                ? (payload.forcedStatus ?? payload.status ?? null)
+                : null;
+            const forcedStatus = normalizeHomeStatus(forcedStatusRaw) === 'not-started' ? null : String(forcedStatusRaw);
+            liveStatusControlCache = {
+                forcedStatus,
+                updatedAt: payload && typeof payload === 'object' ? (payload.updatedAt ?? null) : null
+            };
+        } catch (error) {
+            console.warn('Impossibile leggere il controllo stato live:', error);
+            liveStatusControlCache = fallback;
+        }
+        liveStatusControlLastFetchTs = Date.now();
+        return liveStatusControlCache;
+    })().finally(() => {
+        liveStatusControlFetchPromise = null;
+    });
+
+    return liveStatusControlFetchPromise;
+}
+function extractCurrentSpeedKmh(point) {
+    const speedKmh = Number(point?.velocita?.km_h ?? point?.velocita?.kmh ?? Number.NaN);
+    if (Number.isFinite(speedKmh)) return speedKmh;
+    const speedMps = Number(point?.velocita?.m_s ?? point?.velocita?.mps ?? Number.NaN);
+    if (Number.isFinite(speedMps)) return speedMps * 3.6;
+    return null;
+}
+function computeLastSegmentSpeedKmh(points) {
+    if (!Array.isArray(points) || points.length < 2) return null;
+    const last = points[points.length - 1];
+    const prev = points[points.length - 2];
+    const lastTs = new Date(last?.orario ?? '').getTime();
+    const prevTs = new Date(prev?.orario ?? '').getTime();
+    const lastMeters = Number(last?.distanza?.metri ?? Number.NaN);
+    const prevMeters = Number(prev?.distanza?.metri ?? Number.NaN);
+    if (!Number.isFinite(lastTs) || !Number.isFinite(prevTs) || lastTs <= prevTs) return null;
+    if (!Number.isFinite(lastMeters) || !Number.isFinite(prevMeters) || lastMeters < prevMeters) return null;
+    const deltaSeconds = (lastTs - prevTs) / 1000;
+    if (deltaSeconds <= 0) return null;
+    const deltaMeters = lastMeters - prevMeters;
+    return (deltaMeters / deltaSeconds) * 3.6;
+}
+function getPointStatusKey(point) {
+    const fromTracker = normalizeHomeStatus(point?.stato ?? point?.status ?? point?.pointStatus ?? '');
+    if (fromTracker !== 'not-started') return fromTracker;
+
+    const speedKmh = Number(point?.velocita?.km_h ?? point?.velocita?.kmh ?? point?.velocita ?? Number.NaN);
+    if (Number.isFinite(speedKmh)) return speedKmh > 0.5 ? 'moving' : 'paused';
+
+    const speedMps = Number(point?.velocita?.m_s ?? point?.velocita?.mps ?? Number.NaN);
+    if (Number.isFinite(speedMps)) return speedMps > 0.14 ? 'moving' : 'paused';
+
+    return 'not-started';
+}
+function hasMovingStreakLongEnough(points, minMs = movingStatusRecoveryMs, sinceTs = null) {
+    if (!Array.isArray(points) || points.length < 2) return false;
+    const lastPoint = points[points.length - 1];
+    if (getPointStatusKey(lastPoint) !== 'moving') return false;
+
+    const newestTs = new Date(lastPoint?.orario ?? '').getTime();
+    if (!Number.isFinite(newestTs)) return false;
+
+    if (Number.isFinite(sinceTs) && newestTs < sinceTs) return false;
+
+    let oldestMovingTs = newestTs;
+    for (let index = points.length - 1; index >= 0; index -= 1) {
+        const point = points[index];
+        const pointTs = new Date(point?.orario ?? '').getTime();
+        if (Number.isFinite(sinceTs) && Number.isFinite(pointTs) && pointTs < sinceTs) break;
+        if (getPointStatusKey(point) !== 'moving') break;
+        if (Number.isFinite(pointTs)) oldestMovingTs = pointTs;
+    }
+    return (newestTs - oldestMovingTs) >= minMs;
+}
+function hasRecoveredAfterForcedEnded(points, sinceTs, minMs = movingStatusRecoveryMs) {
+    if (!Array.isArray(points) || points.length < 2 || !Number.isFinite(sinceTs)) return false;
+    let streakStartTs = null;
+    for (let index = 0; index < points.length; index += 1) {
+        const point = points[index];
+        const pointTs = new Date(point?.orario ?? '').getTime();
+        if (!Number.isFinite(pointTs) || pointTs < sinceTs) continue;
+        const isMoving = getPointStatusKey(point) === 'moving';
+        if (!isMoving) {
+            streakStartTs = null;
+            continue;
+        }
+        if (!Number.isFinite(streakStartTs)) streakStartTs = pointTs;
+        if ((pointTs - streakStartTs) >= minMs) return true;
+    }
+    return false;
+}
+function resolveSummaryStatus(points, lastPoint, speedKmh) {
+    const inferredStatus = speedKmh > 0.5 ? 'moving' : 'paused';
+    const trackerStatus = getPointStatusKey(lastPoint);
+    const baseStatus = trackerStatus !== 'not-started' ? trackerStatus : inferredStatus;
+
+    const forcedStatus = normalizeHomeStatus(liveStatusControlCache?.forcedStatus ?? '');
+    if (forcedStatus === 'ended') {
+        const forcedAtTs = new Date(liveStatusControlCache?.updatedAt ?? '').getTime();
+        const alreadyRecovered = hasRecoveredAfterForcedEnded(points, forcedAtTs, movingStatusRecoveryMs);
+        if (alreadyRecovered) return baseStatus;
+        const recoveredToMoving = hasMovingStreakLongEnough(
+            points,
+            movingStatusRecoveryMs,
+            Number.isFinite(forcedAtTs) ? forcedAtTs : null
+        );
+        return recoveredToMoving ? 'moving' : 'ended';
+    }
+    if (forcedStatus !== 'not-started') return forcedStatus;
+
+    return baseStatus;
+}
+function extractHeartRateBpm(point) {
+    const direct = Number(point?.frequenza_cardiaca?.bpm ?? point?.heartRateBeatsPerMin ?? point?.heartRate ?? Number.NaN);
+    return Number.isFinite(direct) && direct > 0 ? Math.round(direct) : null;
+}
+function computeMovingStats(points) {
+    if (!Array.isArray(points) || points.length < 2) return { movingDuration: 0, movingDistanceKm: 0 };
+    let movingSeconds = 0;
+    let movingMeters = 0;
+    for (let index = 1; index < points.length; index += 1) {
+        const prevPoint = points[index - 1];
+        const currentPoint = points[index];
+        const prevTs = new Date(prevPoint?.orario ?? '').getTime();
+        const currentTs = new Date(currentPoint?.orario ?? '').getTime();
+        if (!Number.isFinite(prevTs) || !Number.isFinite(currentTs) || currentTs <= prevTs) continue;
+        if (getPointStatusKey(currentPoint) !== 'moving') continue;
+        movingSeconds += Math.floor((currentTs - prevTs) / 1000);
+        const currentMeters = Number(currentPoint?.distanza?.metri ?? Number.NaN);
+        const prevMeters = Number(prevPoint?.distanza?.metri ?? Number.NaN);
+        if (Number.isFinite(currentMeters) && Number.isFinite(prevMeters) && currentMeters >= prevMeters) {
+            movingMeters += (currentMeters - prevMeters);
+        }
+    }
+    return {
+        movingDuration: movingSeconds,
+        movingDistanceKm: movingMeters > 0 ? (movingMeters / 1000) : 0
+    };
+}
+function computeAverageHeartRate(points) {
+    if (!Array.isArray(points) || !points.length) return null;
+    const values = points
+        .map(point => extractHeartRateBpm(point))
+        .filter(value => Number.isFinite(value));
+    if (!values.length) return null;
+    const avg = values.reduce((acc, value) => acc + value, 0) / values.length;
+    return Math.round(avg);
+}
+function computeMaxSpeedKmh(points) {
+    if (!Array.isArray(points) || !points.length) return 0;
+    let maxSpeed = 0;
+    points.forEach(point => {
+        const value = extractCurrentSpeedKmh(point);
+        if (Number.isFinite(value) && value > maxSpeed) maxSpeed = value;
+    });
+    return maxSpeed;
 }
 function buildSummary(points) {
     if (!points.length) return null;
@@ -1302,7 +1513,37 @@ function buildSummary(points) {
         ? Math.floor((endTs - startTs) / 1000)
         : null;
     const duration = elapsedFromTimestamps ?? (lastPoint.tempo_trascorso?.secondi ?? 0);
-    const speed = duration > 0 ? ((lastPoint.distanza?.metri ?? 0) / duration) * 3.6 : 0;
+    const speedFromLatest = extractCurrentSpeedKmh(lastPoint);
+    const speedFromRecentPoint = speedFromLatest ?? (() => {
+        for (let index = points.length - 2; index >= 0; index -= 1) {
+            const value = extractCurrentSpeedKmh(points[index]);
+            if (value !== null) return value;
+        }
+        return null;
+    })();
+    const speedFromLastSegment = computeLastSegmentSpeedKmh(points);
+    const speed = Number.isFinite(speedFromRecentPoint)
+        ? Number(speedFromRecentPoint)
+        : Number.isFinite(speedFromLastSegment)
+            ? Number(speedFromLastSegment)
+            : 0;
+    const movingStats = computeMovingStats(points);
+    const movingDuration = movingStats.movingDuration;
+    const movingDistanceKm = movingStats.movingDistanceKm;
+    const totalAvgSpeed = duration > 0 ? (totalDistance / (duration / 3600)) : 0;
+    const movingAvgSpeed = movingDuration > 0 && movingDistanceKm > 0
+        ? (movingDistanceKm / (movingDuration / 3600))
+        : 0;
+    const maxSpeed = computeMaxSpeedKmh(points);
+    const heartRateBpm = extractHeartRateBpm(lastPoint)
+        ?? (() => {
+            for (let index = points.length - 1; index >= 0; index -= 1) {
+                const value = extractHeartRateBpm(points[index]);
+                if (value !== null) return value;
+            }
+            return null;
+        })();
+    const heartRateAvgBpm = computeAverageHeartRate(points);
     const elevationGain = points.reduce((acc, point, index) => {
         if (index === 0) return 0;
         const currentAlt = Number(point.altitudine?.metri ?? 0);
@@ -1315,10 +1556,17 @@ function buildSummary(points) {
         lastPoint,
         totalDistance,
         duration,
+        movingDuration,
+        movingDistanceKm,
         speed,
+        totalAvgSpeed,
+        movingAvgSpeed,
+        maxSpeed,
+        heartRateBpm,
+        heartRateAvgBpm,
         elevationGain,
         progress: Math.min(totalDistance / (gpxTotalKm || 290) * 100, 100),
-        status: speed > 0.5 ? 'In movimento' : 'In pausa'
+        status: resolveSummaryStatus(points, lastPoint, speed)
     };
 }
 function updateHomeSummary(summary) {
@@ -1333,14 +1581,15 @@ function updateHomeSummary(summary) {
     document.getElementById('homeTime').textContent = summary.duration > 0 ? formatTime(summary.duration) : '0';
     document.getElementById('homeGain').textContent = Math.round(summary.elevationGain);
     document.getElementById('homeSteps').textContent = computeEstimatedSteps(summary.totalDistance, summary.duration).toLocaleString();
-    document.getElementById('homeStatusLabel').textContent = translateStatus(summary.status);
-    document.getElementById('homeStatusText').textContent = summary.status === 'In movimento'
+    const statusKey = normalizeHomeStatus(summary.status);
+    document.getElementById('homeStatusLabel').textContent = translateStatus(statusKey);
+    document.getElementById('homeStatusText').textContent = statusKey === 'moving'
         ? t('dynamic.liveTrackingActive')
-        : summary.status === 'Non partito'
+        : statusKey === 'not-started'
             ? t('dynamic.liveNotAvailable')
             : t('dynamic.waitingNextPoint');
-    updateHomeHeroStatusDot(summary.status);
-    updateHomeStateLegend(summary.status);
+    updateHomeHeroStatusDot(statusKey);
+    updateHomeStateLegend(statusKey);
 }
 function updateHomeHeroStatusDot(statusLabel) {
     const dot = document.getElementById('homeStatusDot');
@@ -1355,7 +1604,14 @@ function updateHomeHeroStatusDot(statusLabel) {
 }
 function normalizeHomeStatus(status) {
     const value = String(status || '').toLowerCase();
+    if (value === 'moving') return 'moving';
+    if (value === 'paused') return 'paused';
+    if (value === 'ended') return 'ended';
+    if (value === 'completed') return 'completed';
+    if (value === 'not-started' || value === 'not started') return 'not-started';
+    if (value.includes('station') || value.includes('fermo') || value.includes('stop')) return 'paused';
     if (value.includes('mov')) return 'moving';
+    if (value.includes('cycl') || value.includes('run') || value.includes('walk')) return 'moving';
     if (value.includes('paus')) return 'paused';
     if (value.includes('fine')) return 'ended';
     if (value.includes('complet')) return 'completed';
@@ -1363,7 +1619,7 @@ function normalizeHomeStatus(status) {
 }
 
 function updateHomeStateLegend(statusLabel) {
-    const label = statusLabel || 'Non partito';
+    const label = statusLabel || 'not-started';
     const stateLabel = document.getElementById('homeAdventureState');
     if (stateLabel) stateLabel.textContent = translateStatus(label);
 
@@ -1378,7 +1634,7 @@ function buildHomePreStartSummary() {
         totalDistance: 0,
         duration: 0,
         elevationGain: 0,
-        status: 'Non partito',
+        status: 'not-started',
         lastPoint: null,
         points: [],
         speed: 0,
@@ -1391,10 +1647,17 @@ function buildDashboardPreStartSummary() {
         lastPoint: null,
         totalDistance: 0,
         duration: 0,
+        movingDuration: 0,
+        movingDistanceKm: 0,
         speed: 0,
+        totalAvgSpeed: 0,
+        movingAvgSpeed: 0,
+        maxSpeed: 0,
+        heartRateBpm: null,
+        heartRateAvgBpm: null,
         elevationGain: 0,
         progress: 0,
-        status: 'Non partito'
+        status: 'not-started'
     };
 }
 function buildLivePreStartSummary() {
@@ -1406,7 +1669,7 @@ function buildLivePreStartSummary() {
         speed: 0,
         elevationGain: 0,
         progress: 0,
-        status: 'Non partito'
+        status: 'not-started'
     };
 }
 function updateDashboardSummary(summary) {
@@ -1414,9 +1677,15 @@ function updateDashboardSummary(summary) {
     const metricRemaining = document.getElementById('metricRemaining');
     const metricCompletion = document.getElementById('metricCompletion');
     const metricSpeed = document.getElementById('metricSpeed');
+    const metricAvgMovingSpeed = document.getElementById('metricAvgMovingSpeed');
+    const metricAvgTotalSpeed = document.getElementById('metricAvgTotalSpeed');
+    const metricMaxSpeed = document.getElementById('metricMaxSpeed');
     const metricAltitude = document.getElementById('metricAltitude');
     const metricElevation = document.getElementById('metricElevation');
     const metricTime = document.getElementById('metricTime');
+    const metricMovingTime = document.getElementById('metricMovingTime');
+    const metricHeartRate = document.getElementById('metricHeartRate');
+    const metricHeartRateAvg = document.getElementById('metricHeartRateAvg');
 
     const distanceText = summary.totalDistance === 0 ? '0' : summary.totalDistance.toFixed(1);
     if (metricDistance) metricDistance.textContent = `${distanceText} km`;
@@ -1427,10 +1696,16 @@ function updateDashboardSummary(summary) {
     if (metricRemaining) metricRemaining.textContent = `${remaining.toFixed(1)} km`;
     if (metricCompletion) metricCompletion.textContent = completionText;
     if (metricSpeed) metricSpeed.textContent = `${summary.speed.toFixed(1)} km/h`;
+    if (metricAvgMovingSpeed) metricAvgMovingSpeed.textContent = `${summary.movingAvgSpeed.toFixed(1)} km/h`;
+    if (metricAvgTotalSpeed) metricAvgTotalSpeed.textContent = `${summary.totalAvgSpeed.toFixed(1)} km/h`;
+    if (metricMaxSpeed) metricMaxSpeed.textContent = `${summary.maxSpeed.toFixed(1)} km/h`;
     const altitude = Number(summary.lastPoint?.altitudine?.metri ?? 0);
     if (metricAltitude) metricAltitude.textContent = `${altitude.toFixed(0)} m`;
     if (metricElevation) metricElevation.textContent = `${Math.round(summary.elevationGain)} m`;
     if (metricTime) metricTime.textContent = summary.duration > 0 ? formatTime(summary.duration) : '0';
+    if (metricMovingTime) metricMovingTime.textContent = summary.movingDuration > 0 ? formatTime(summary.movingDuration) : '0';
+    if (metricHeartRate) metricHeartRate.textContent = Number.isFinite(summary.heartRateBpm) ? `${summary.heartRateBpm} bpm` : '-- bpm';
+    if (metricHeartRateAvg) metricHeartRateAvg.textContent = Number.isFinite(summary.heartRateAvgBpm) ? `${summary.heartRateAvgBpm} bpm` : '-- bpm';
 }
 function initHomeCountdown() {
     const dayEl = document.getElementById('countdownDays');
@@ -1517,7 +1792,8 @@ function createChart(canvasId, label, data, color, yAxisLabel = '', xAxisConfig 
         min: xAxisConfig.min,
         max: xAxisConfig.max,
         label: xAxisConfig.label || 'Km',
-        tickCallback: xAxisConfig.tickCallback || (value => Number(value).toFixed(0))
+        tickCallback: xAxisConfig.tickCallback || (value => Number(value).toFixed(0)),
+        maxTicksLimit: Number.isFinite(xAxisConfig.maxTicksLimit) ? xAxisConfig.maxTicksLimit : 7
     };
     if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
     chartInstances[canvasId] = new Chart(ctx, {
@@ -1529,14 +1805,20 @@ function createChart(canvasId, label, data, color, yAxisLabel = '', xAxisConfig 
                 parsing: false,
                 borderColor: color,
                 backgroundColor: `${color}33`,
-                tension: 0.3,
+                tension: 0.24,
                 fill: true,
-                pointRadius: 0
+                spanGaps: false,
+                pointRadius: 1.8,
+                pointHoverRadius: 3.6
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'nearest',
+                intersect: false
+            },
             plugins: { legend: { display: false } },
             scales: {
                 x: {
@@ -1545,6 +1827,7 @@ function createChart(canvasId, label, data, color, yAxisLabel = '', xAxisConfig 
                     min: axis.min,
                     max: axis.max,
                     ticks: {
+                        maxTicksLimit: axis.maxTicksLimit,
                         callback: axis.tickCallback
                     },
                     title: { display: true, text: axis.label }
@@ -1582,6 +1865,7 @@ function computeBlendedRemaining(summary) {
     if (!summary.lastPoint || !gpxCoords || !gpxCoords.length) return remainingGpx;
     const last = summary.lastPoint;
     const dest = gpxCoords[gpxCoords.length - 1];
+    if (!Number.isFinite(last?.coordinate?.lat) || !Number.isFinite(last?.coordinate?.lon)) return remainingGpx;
     const remainingLive = haversineKm(last.coordinate.lat, last.coordinate.lon, dest.lat, dest.lng);
     // progress fraction (0..1)
     const progressFrac = Math.min(Math.max(totalDistance / gpxtotal, 0), 1);
@@ -1954,6 +2238,7 @@ async function initLivePage() {
     initializeTheme();
     updateLiveUI(buildLivePreStartSummary());
     await Promise.all([ensureGpxDataLoaded(), ensureRouteTrackersLoaded()]);
+    await ensureLiveStatusControl(true);
     initMap({ showRouteTrackers: true });
     buildNav();
     const points = await fetchPoints();
@@ -1979,12 +2264,13 @@ async function initLivePage() {
         fullscreenBtn.addEventListener('click', () => {
             mapWrap.classList.toggle('map-wrap--fullscreen');
             const isFullscreen = mapWrap.classList.contains('map-wrap--fullscreen');
-            fullscreenBtn.textContent = isFullscreen ? '🡼' : '⛶';
+            fullscreenBtn.textContent = isFullscreen ? '\u2199' : '\u26F6';
             fullscreenBtn.title = isFullscreen ? t('pages.live.exitFullscreenMap') : t('pages.live.fullscreenMap');
             setTimeout(() => mapInstance?.invalidateSize(), 120);
         });
     }
     setInterval(async () => {
+        await ensureLiveStatusControl(true);
         const points = await fetchPoints();
         const summary = buildSummary(points) || buildLivePreStartSummary();
         updateLiveUI(summary);
@@ -1998,15 +2284,34 @@ async function initHomePage() {
     initializeTheme();
     initHomeCountdown();
     await ensureGpxDataLoaded();
+    await ensureLiveStatusControl(true);
     const points = await fetchPoints();
     const summary = buildSummary(points) || buildHomePreStartSummary();
     updateHomeSummary(summary);
     updateHomeCountdownVisibility(summary);
+    setInterval(async () => {
+        await ensureLiveStatusControl(true);
+        const latestPoints = await fetchPoints();
+        const latestSummary = buildSummary(latestPoints) || buildHomePreStartSummary();
+        updateHomeSummary(latestSummary);
+        updateHomeCountdownVisibility(latestSummary);
+    }, homeRefreshMs);
 }
 function buildChartData(points, summaryContext = null) {
     const safePoints = points
-        .filter(p => p && p.velocita && p.altitudine && p.distanza && p.orario)
+        .filter(p => p && p.distanza && p.orario)
         .sort((a, b) => new Date(a.orario).getTime() - new Date(b.orario).getTime());
+    if (!safePoints.length) {
+        return {
+            speedSeries: [],
+            altitudeSeries: [],
+            elevationSeries: [],
+            heartRateSeries: [],
+            maxTimeHours: 0,
+            maxDistanceKm: 0
+        };
+    }
+
     const rawKm = safePoints.map(p => Number(p.distanza.km ?? 0));
     const kmMin = rawKm.length ? Math.min(...rawKm) : 0;
     const kmMax = rawKm.length ? Math.max(...rawKm) : 0;
@@ -2029,92 +2334,150 @@ function buildChartData(points, summaryContext = null) {
         : (safePoints.length > 1 ? (fallbackTotalKm * index) / (safePoints.length - 1) : 0)));
     const timeByIndex = safePoints.map(point => new Date(point.orario).getTime());
     const validStartTs = timeByIndex.find(ts => Number.isFinite(ts));
-    const summaryDurationHours = Number(summaryContext?.duration ?? 0) / 3600;
-    const globalAvgSpeed = summaryDurationHours > 0 ? (fallbackTotalKm / summaryDurationHours) : null;
-    const maxReasonableSpeed = Number.isFinite(globalAvgSpeed) && globalAvgSpeed > 0
-        ? Math.max(8, globalAvgSpeed * 2.5)
-        : 12;
-    const segmentSpeed = safePoints.map(() => null);
-    for (let i = 1; i < safePoints.length; i += 1) {
-        const dtMs = timeByIndex[i] - timeByIndex[i - 1];
-        const dk = kmByIndex[i] - kmByIndex[i - 1];
-        if (!Number.isFinite(dtMs) || dtMs <= 0 || !Number.isFinite(dk) || dk < 0) continue;
-        const speed = dk / (dtMs / 3600000);
-        if (Number.isFinite(speed) && speed >= 0 && speed <= maxReasonableSpeed) {
-            segmentSpeed[i] = speed;
-        }
-    }
-    const validSegmentSpeed = segmentSpeed.filter(v => Number.isFinite(v));
-    const percentile = (values, q) => {
-        if (!values.length) return 0;
-        const sorted = [...values].sort((a, b) => a - b);
-        const idx = Math.max(0, Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * q)));
-        return sorted[idx];
-    };
-    const derivedSpeedReliable = validSegmentSpeed.length >= Math.max(4, Math.floor(safePoints.length * 0.15));
-    const speedCap = derivedSpeedReliable ? Math.min(maxReasonableSpeed, Math.max(8, percentile(validSegmentSpeed, 0.95) * 1.8)) : maxReasonableSpeed;
-    const rawSpeedSeries = safePoints.map((point, index) => {
-        if (derivedSpeedReliable) {
-            const derived = segmentSpeed[index];
-            if (Number.isFinite(derived)) return Math.min(derived, speedCap);
-        }
-        const reportedSpeed = Number(point.velocita.km_h ?? 0);
-        if (Number.isFinite(reportedSpeed) && reportedSpeed > 0.1) {
-            return Math.min(reportedSpeed, maxReasonableSpeed);
-        }
-        return Number.isFinite(globalAvgSpeed) && globalAvgSpeed > 0 ? globalAvgSpeed : 0;
-    });
-    const smoothNumericSeries = (values, radius = 2) => values.map((_, index) => {
-        let sum = 0;
-        let count = 0;
-        for (let j = Math.max(0, index - radius); j <= Math.min(values.length - 1, index + radius); j += 1) {
-            const value = values[j];
-            if (Number.isFinite(value)) {
-                sum += value;
-                count += 1;
-            }
-        }
-        return count ? (sum / count) : null;
-    });
-    const smoothedSpeedSeries = smoothNumericSeries(rawSpeedSeries, 2);
     const fallbackDurationHours = Math.max(0, Number(summaryContext?.duration ?? 0) / 3600);
     let cumulativeElevation = 0;
+    let previousAltitude = null;
+    const deltaIntervalsMs = [];
+    for (let index = 1; index < timeByIndex.length; index += 1) {
+        const deltaMs = timeByIndex[index] - timeByIndex[index - 1];
+        if (Number.isFinite(deltaMs) && deltaMs > 0) deltaIntervalsMs.push(deltaMs);
+    }
+    const medianDeltaMs = deltaIntervalsMs.length
+        ? [...deltaIntervalsMs].sort((a, b) => a - b)[Math.floor(deltaIntervalsMs.length / 2)]
+        : 0;
+    const staleThresholdMs = Math.max(120000, medianDeltaMs * 3);
     const speedSeries = [];
     const altitudeSeries = [];
     const elevationSeries = [];
-    const kmSeries = [];
+    const heartRateSeries = [];
     let maxTimeHours = 0;
+    let maxDistanceKm = 0;
+
     safePoints.forEach((point, index) => {
         const km = kmByIndex[index];
         const absoluteTs = timeByIndex[index];
         const timeHours = (Number.isFinite(validStartTs) && Number.isFinite(absoluteTs) && absoluteTs >= validStartTs)
             ? (absoluteTs - validStartTs) / 3600000
             : (safePoints.length > 1 ? (fallbackDurationHours * index) / (safePoints.length - 1) : 0);
-        const altitude = Number(point.altitudine.metri ?? 0);
-        const speed = Number.isFinite(smoothedSpeedSeries[index]) ? smoothedSpeedSeries[index] : 0;
-        maxTimeHours = Math.max(maxTimeHours, timeHours);
-        if (index > 0) {
-            const prevAlt = Number(safePoints[index - 1].altitudine.metri ?? 0);
-            cumulativeElevation += Math.max(0, altitude - prevAlt);
+        const altitudeRaw = Number(point?.altitudine?.metri ?? Number.NaN);
+        const altitude = Number.isFinite(altitudeRaw) ? altitudeRaw : null;
+
+        const currentSpeed = extractCurrentSpeedKmh(point);
+        const prevTs = index > 0 ? timeByIndex[index - 1] : Number.NaN;
+        const currentTs = timeByIndex[index];
+        const dtMs = Number.isFinite(prevTs) && Number.isFinite(currentTs) ? currentTs - prevTs : Number.NaN;
+        const isStaleGap = Number.isFinite(dtMs) && dtMs > staleThresholdMs;
+
+        let speed = Number.isFinite(currentSpeed) ? currentSpeed : null;
+        if (!Number.isFinite(speed) && index > 0 && !isStaleGap) {
+            const prevMeters = Number(safePoints[index - 1]?.distanza?.metri ?? Number.NaN);
+            const currentMeters = Number(point?.distanza?.metri ?? Number.NaN);
+            if (Number.isFinite(prevMeters) && Number.isFinite(currentMeters) && currentMeters >= prevMeters && Number.isFinite(dtMs) && dtMs > 0) {
+                speed = ((currentMeters - prevMeters) / (dtMs / 1000)) * 3.6;
+            }
         }
-        speedSeries.push({ km, t: timeHours, y: Number(speed.toFixed(2)) });
-        altitudeSeries.push({ km, t: timeHours, y: altitude });
-        elevationSeries.push({ km, t: timeHours, y: cumulativeElevation });
-        kmSeries.push({ km, t: timeHours, y: km });
+        if (isStaleGap) speed = null;
+
+        const hr = extractHeartRateBpm(point);
+
+        maxTimeHours = Math.max(maxTimeHours, timeHours);
+        maxDistanceKm = Math.max(maxDistanceKm, Number.isFinite(km) ? km : 0);
+        if (Number.isFinite(altitude) && Number.isFinite(previousAltitude)) {
+            cumulativeElevation += Math.max(0, altitude - previousAltitude);
+        }
+        if (Number.isFinite(altitude)) {
+            previousAltitude = altitude;
+        }
+
+        speedSeries.push({ km, t: timeHours, y: Number.isFinite(speed) ? Number(speed.toFixed(2)) : null });
+        altitudeSeries.push({ km, t: timeHours, y: Number.isFinite(altitude) ? altitude : null });
+        elevationSeries.push({ km, t: timeHours, y: Number.isFinite(altitude) ? cumulativeElevation : null });
+        heartRateSeries.push({ km, t: timeHours, y: Number.isFinite(hr) ? hr : null });
     });
+
     return {
         speedSeries,
         altitudeSeries,
         elevationSeries,
-        kmSeries,
+        heartRateSeries,
         maxTimeHours,
-        dailyLabels: [...new Set(safePoints.map(p => new Date(p.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })))] ,
-        kmDaily: safePoints.reduce((acc, point) => {
-            const day = new Date(point.orario).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-            acc[day] = Math.max(acc[day] ?? 0, Number(point.distanza.km ?? 0));
-            return acc;
-        }, {})
+        maxDistanceKm
     };
+}
+function roundUpToStep(value, step) {
+    if (!Number.isFinite(value) || value <= 0) return step;
+    return Math.ceil(value / step) * step;
+}
+function buildDashboardAxisConfig(mode, chartData, summary) {
+    if (mode === 'time') {
+        const maxHours = Math.max(0.25, chartData.maxTimeHours || Number(summary.duration || 0) / 3600 || 0);
+        const roundedMaxHours = roundUpToStep(maxHours, maxHours > 8 ? 1 : 0.25);
+        return {
+            min: 0,
+            max: roundedMaxHours,
+            label: t('pages.dashboard.xTime') || 'Tempo',
+            tickCallback: value => formatHoursTick(value),
+            maxTicksLimit: 6
+        };
+    }
+    const maxKm = Math.max(1, chartData.maxDistanceKm || summary.totalDistance || 0);
+    const roundedMaxKm = roundUpToStep(maxKm, maxKm > 40 ? 5 : maxKm > 10 ? 2 : 1);
+    return {
+        min: 0,
+        max: roundedMaxKm,
+        label: t('pages.dashboard.xDistance') || 'Km',
+        tickCallback: value => {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return '';
+            return numeric < 10 ? numeric.toFixed(1) : numeric.toFixed(0);
+        },
+        maxTicksLimit: 7
+    };
+}
+function initDashboardChartFullscreen() {
+    const grid = document.querySelector('.page-dashboard .chart-grid');
+    if (!grid || grid.dataset.fullscreenInit === 'true') return;
+
+    const closeFullscreen = () => {
+        const activeCard = grid.querySelector('.metric-card.chart-card-fullscreen');
+        if (!activeCard) return;
+        activeCard.classList.remove('chart-card-fullscreen');
+        const btn = activeCard.querySelector('.chart-fullscreen-btn');
+        if (btn) {
+            btn.textContent = 'Full';
+            btn.setAttribute('aria-label', 'Ingrandisci grafico');
+            btn.setAttribute('title', 'Ingrandisci grafico');
+        }
+        document.body.classList.remove('chart-fullscreen-open');
+        const canvas = activeCard.querySelector('canvas');
+        if (canvas && chartInstances[canvas.id]) chartInstances[canvas.id].resize();
+    };
+
+    grid.addEventListener('click', event => {
+        const button = event.target.closest('.chart-fullscreen-btn');
+        if (!button) return;
+        const card = button.closest('.metric-card');
+        if (!card) return;
+        const isFullscreen = card.classList.contains('chart-card-fullscreen');
+        if (isFullscreen) {
+            closeFullscreen();
+            return;
+        }
+        closeFullscreen();
+        card.classList.add('chart-card-fullscreen');
+        button.textContent = 'Close';
+        button.setAttribute('aria-label', 'Chiudi grafico');
+        button.setAttribute('title', 'Chiudi grafico');
+        document.body.classList.add('chart-fullscreen-open');
+        const canvas = card.querySelector('canvas');
+        if (canvas && chartInstances[canvas.id]) chartInstances[canvas.id].resize();
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeFullscreen();
+    });
+
+    grid.dataset.fullscreenInit = 'true';
 }
 async function initDashboardPage() {
     initializeTheme();
@@ -2164,26 +2527,24 @@ async function initDashboardPage() {
 
     const renderCharts = axisMode => {
         const mode = axisMode === 'time' ? 'time' : 'distance';
-        const xMin = 0;
-        const xMax = mode === 'time'
-            ? Math.max(1, chartData.maxTimeHours || Number(summary.duration || 0) / 3600 || 0)
-            : Math.max(1, summary.totalDistance || 0);
-        const toAxisSeries = series => series.map(p => ({ x: mode === 'time' ? p.t : p.km, y: p.y }));
-        const speedSeries = stretchSeriesToRange(toAxisSeries(chartData.speedSeries), xMin, xMax, 0);
-        const altitudeSeries = stretchSeriesToRange(toAxisSeries(chartData.altitudeSeries), xMin, xMax, 0);
-        const elevationSeries = stretchSeriesToRange(toAxisSeries(chartData.elevationSeries), xMin, xMax, 0);
-        const kmSeries = stretchSeriesToRange(toAxisSeries(chartData.kmSeries), xMin, xMax, 0);
-        const axisConfig = mode === 'time'
-            ? { min: xMin, max: xMax, label: 'Tempo', tickCallback: value => formatHoursTick(value) }
-            : { min: xMin, max: xMax, label: 'Km', tickCallback: value => Number(value).toFixed(0) };
+        const toAxisSeries = series => series.map(p => ({
+            x: mode === 'time' ? p.t : p.km,
+            y: Number.isFinite(p?.y) ? p.y : null
+        }));
+        const speedSeries = toAxisSeries(chartData.speedSeries);
+        const altitudeSeries = toAxisSeries(chartData.altitudeSeries);
+        const elevationSeries = toAxisSeries(chartData.elevationSeries);
+        const heartRateSeries = toAxisSeries(chartData.heartRateSeries);
+        const axisConfig = buildDashboardAxisConfig(mode, chartData, summary);
         const chartTitles = resolveText('pages.dashboard.chartTitles');
         createChart('chartSpeed', Array.isArray(chartTitles) ? chartTitles[0] : 'Velocita', speedSeries, '#49a8ff', 'Km/h', axisConfig);
         createChart('chartAltitude', Array.isArray(chartTitles) ? chartTitles[1] : 'Altitudine', altitudeSeries, '#7f7dff', 'm', axisConfig);
-        createChart('chartKm', Array.isArray(chartTitles) ? chartTitles[2] : 'Km cumulati', kmSeries, '#5dd97d', 'Km', axisConfig);
+        createChart('chartHeartRate', Array.isArray(chartTitles) ? chartTitles[2] : 'Frequenza cardiaca', heartRateSeries, '#ff6b6b', 'bpm', axisConfig);
         createChart('chartElevation', Array.isArray(chartTitles) ? chartTitles[3] : 'Dislivello cumulato', elevationSeries, '#f3c03d', 'm', axisConfig);
     };
 
     renderCharts(xAxisMode);
+    initDashboardChartFullscreen();
     if (xAxisSelect) {
         xAxisSelect.addEventListener('change', event => {
             const mode = event.target.value === 'time' ? 'time' : 'distance';
@@ -2568,6 +2929,68 @@ function bindAdminForm(type) {
     });
     form.dataset.bound = 'true';
 }
+async function persistLiveStatusControl(forcedStatus) {
+    const database = getFirebaseDatabase();
+    if (!database) {
+        throw new Error('Firebase non disponibile. Verifica configurazione e login admin.');
+    }
+    const statusKey = normalizeHomeStatus(forcedStatus);
+    const reference = database.ref(`${contentDatabasePath}/liveStatus`);
+    if (statusKey === 'not-started') {
+        await reference.set(null);
+        liveStatusControlCache = { forcedStatus: null, updatedAt: null };
+        liveStatusControlLastFetchTs = Date.now();
+        return;
+    }
+    const payload = {
+        forcedStatus: statusKey === 'ended' ? 'Fine giornata' : forcedStatus,
+        updatedAt: new Date().toISOString()
+    };
+    await reference.set(payload);
+    liveStatusControlCache = payload;
+    liveStatusControlLastFetchTs = Date.now();
+}
+function bindAdminLiveStatusForm() {
+    const form = document.getElementById('adminLiveStatusForm');
+    if (!form || form.dataset.bound === 'true') return;
+    const select = form.querySelector('[name="forcedStatus"]');
+    const notice = document.getElementById('adminLiveStatusNotice');
+    const current = document.getElementById('adminLiveStatusCurrent');
+
+    const renderCurrent = () => {
+        const forcedKey = normalizeHomeStatus(liveStatusControlCache?.forcedStatus ?? '');
+        if (select) select.value = forcedKey === 'ended' ? 'ended' : '';
+        if (current) {
+            current.textContent = forcedKey === 'ended'
+                ? 'Stato attivo: Fine giornata (forzato da admin)'
+                : 'Stato attivo: Automatico da Garmin/Firebase';
+        }
+    };
+
+    ensureLiveStatusControl(true)
+        .then(renderCurrent)
+        .catch(() => renderCurrent());
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        setAdminFeedbackMessage(notice, '', false);
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+            const selected = select?.value === 'ended' ? 'Fine giornata' : null;
+            await persistLiveStatusControl(selected);
+            await ensureLiveStatusControl(true);
+            renderCurrent();
+            setAdminFeedbackMessage(notice, 'Stato live aggiornato.', false);
+        } catch (error) {
+            setAdminFeedbackMessage(notice, `Aggiornamento stato fallito: ${error.message || 'errore sconosciuto'}.`, true);
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
+    });
+
+    form.dataset.bound = 'true';
+}
 function showAdminState(unlocked) {
     const locked = document.getElementById('adminLocked');
     const app = document.getElementById('adminApp');
@@ -2612,6 +3035,7 @@ function initAdminPage() {
             showAdminState(true);
             initAdminFormHelpers();
             bindAdminForm('gallery');
+            bindAdminLiveStatusForm();
             await syncNightGalleryEntriesToFirebase();
             await renderAdminCollection('gallery');
             loginForm.reset();
@@ -2633,6 +3057,7 @@ function initAdminPage() {
     if (isAdminAuthenticated()) {
         initAdminFormHelpers();
         bindAdminForm('gallery');
+        bindAdminLiveStatusForm();
         syncNightGalleryEntriesToFirebase()
             .then(() => renderAdminCollection('gallery'))
             .catch(() => renderAdminCollection('gallery'));
