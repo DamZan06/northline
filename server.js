@@ -174,7 +174,7 @@ async function getGarminData() {
 
 
                 frequenza_cardiaca: {
-                    bpm: Number(p.heartRateBeatsPerMin)
+                    bpm: Number(p.heartRateBeatsPerMin || 0)
                 },
 
 
