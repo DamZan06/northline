@@ -40,7 +40,7 @@ const i18nCatalog = {
                 heroTitle: '333 chilometri. Un solo obiettivo.',
                 heroDescription: 'NorthLine è una traversata della Svizzera percorsa interamente a piedi, condivisa in tempo reale attraverso una piattaforma sviluppata appositamente per questa avventura. Qui potrai seguire ogni passo, osservare la posizione live, analizzare le statistiche e vivere il viaggio come se fossi sul sentiero insieme a noi.',
                 heroButtons: ['Segui il Live', 'Scopri il progetto'],
-                statsLabels: ['km percorsi', 'km rimanenti', 'completato', 'tempo trascorso', 'dislivello', 'passi stimati'],
+                statsLabels: ['km percorsi', 'km rimanenti', 'completato', 'tempo trascorso', 'dislivello', 'passi stimati', 'arrivo stimato'],
                 sectionTitle: 'Non osservare solamente il viaggio. Vivilo.',
                 sectionDescription: 'NorthLine ti permette di seguire l\'intera traversata della Svizzera attraverso mappe live, statistiche aggiornate, racconti quotidiani e contenuti esclusivi. Ogni giornata porterà nuove sfide, nuovi paesaggi e una nuova storia da raccontare.',
                 featureTitles: ['Mappa Live', 'Statistiche Live', 'Diario di bordo', 'Replay del percorso'],
@@ -72,7 +72,7 @@ const i18nCatalog = {
                 eyebrow: 'Analisi avanzata',
                 heading: 'Dashboard delle statistiche.',
                 description: 'Statistiche sportive complete con grafici per velocita, altitudine, andamento giornaliero e progressione.',
-                statLabels: ['Distanza percorsa', 'Distanza rimanente', 'Percentuale completata', 'Velocita attuale', 'Velocita media in movimento', 'Velocita media totale', 'Velocita massima', 'Altitudine attuale', 'Dislivello positivo', 'Tempo totale', 'Tempo in movimento', 'Frequenza cardiaca', 'Frequenza cardiaca media'],
+                statLabels: ['Distanza percorsa', 'Distanza rimanente', 'Percentuale completata', 'Velocita attuale', 'Velocita media in movimento', 'Velocita media totale', 'Velocita massima', 'Altitudine attuale', 'Dislivello positivo', 'Tempo totale', 'Tempo in movimento', 'Frequenza cardiaca', 'Frequenza cardiaca media', 'Calorie bruciate', 'Acqua persa', 'Arrivo stimato'],
                 chartsTitle: 'Grafici live',
                 xAxis: 'Asse X',
                 xDistance: 'Km',
@@ -187,7 +187,7 @@ const i18nCatalog = {
                 heroTitle: '333 kilometers. One goal.',
                 heroDescription: 'NorthLine is a full crossing of Switzerland completed entirely on foot, shared live through a platform built specifically for this adventure. Here you can follow every step, watch the live position, analyze the stats, and experience the journey as if you were on the trail with us.',
                 heroButtons: ['Follow Live', 'Discover the project'],
-                statsLabels: ['km covered', 'km remaining', 'completed', 'time elapsed', 'elevation gain', 'estimated steps'],
+                statsLabels: ['km covered', 'km remaining', 'completed', 'time elapsed', 'elevation gain', 'estimated steps', 'estimated arrival'],
                 sectionTitle: 'Do not just watch the journey. Live it.',
                 sectionDescription: 'NorthLine lets you follow the full crossing of Switzerland through live maps, updated stats, daily stories, and exclusive content. Each day brings new challenges, new landscapes, and a new story to tell.',
                 featureTitles: ['Live Map', 'Live Stats', 'Travel Diary', 'Route Replay'],
@@ -219,7 +219,7 @@ const i18nCatalog = {
                 eyebrow: 'Advanced analysis',
                 heading: 'Statistics dashboard.',
                 description: 'Complete sport statistics with charts for speed, altitude, daily trend, and progression.',
-                statLabels: ['Distance covered', 'Distance remaining', 'Completion rate', 'Current speed', 'Moving average speed', 'Total average speed', 'Max speed', 'Current altitude', 'Positive elevation', 'Total time', 'Moving time', 'Heart rate', 'Average heart rate'],
+                statLabels: ['Distance covered', 'Distance remaining', 'Completion rate', 'Current speed', 'Moving average speed', 'Total average speed', 'Max speed', 'Current altitude', 'Positive elevation', 'Total time', 'Moving time', 'Heart rate', 'Average heart rate', 'Calories burned', 'Water lost', 'Estimated arrival'],
                 chartsTitle: 'Live charts',
                 xAxis: 'X axis',
                 xDistance: 'Km',
@@ -346,7 +346,7 @@ const i18nCatalog = {
                 heroTitle: '333 Kilometer. Ein Ziel.',
                 heroDescription: 'NorthLine ist eine komplette Schweiz-Durchquerung zu Fuss, live geteilt über eine Plattform, die speziell für dieses Abenteuer entwickelt wurde. Hier kannst du jeden Schritt verfolgen, die Live-Position sehen, Daten analysieren und die Reise erleben, als wärst du mit uns auf dem Weg.',
                 heroButtons: ['Live verfolgen', 'Projekt entdecken'],
-                statsLabels: ['km gelaufen', 'km verbleibend', 'abgeschlossen', 'verstrichene Zeit', 'Höhenmeter', 'geschätzte Schritte'],
+                statsLabels: ['km gelaufen', 'km verbleibend', 'abgeschlossen', 'verstrichene Zeit', 'Höhenmeter', 'geschätzte Schritte', 'geschätzte Ankunft'],
                 sectionTitle: 'Die Reise nicht nur ansehen. Erleben.',
                 sectionDescription: 'NorthLine lässt dich die gesamte Schweiz-Durchquerung über Live-Karten, aktuelle Statistiken, tägliche Berichte und exklusive Inhalte verfolgen. Jeder Tag bringt neue Herausforderungen, neue Landschaften und eine neue Geschichte.',
                 featureTitles: ['Live-Karte', 'Live-Statistiken', 'Reisetagebuch', 'Strecken-Replay'],
@@ -378,7 +378,7 @@ const i18nCatalog = {
                 eyebrow: 'Erweiterte Analyse',
                 heading: 'Statistik-Dashboard.',
                 description: 'Vollständige Sportstatistiken mit Diagrammen für Tempo, Höhe, Tagesverlauf und Fortschritt.',
-                statLabels: ['Gelaufene Distanz', 'Verbleibende Distanz', 'Abschlussquote', 'Aktuelle Geschwindigkeit', 'Durchschnitt in Bewegung', 'Gesamtdurchschnitt', 'Maximale Geschwindigkeit', 'Aktuelle Höhe', 'Positiver Höhengewinn', 'Gesamtzeit', 'Bewegungszeit', 'Herzfrequenz', 'Durchschnittliche Herzfrequenz'],
+                statLabels: ['Gelaufene Distanz', 'Verbleibende Distanz', 'Abschlussquote', 'Aktuelle Geschwindigkeit', 'Durchschnitt in Bewegung', 'Gesamtdurchschnitt', 'Maximale Geschwindigkeit', 'Aktuelle Höhe', 'Positiver Höhengewinn', 'Gesamtzeit', 'Bewegungszeit', 'Herzfrequenz', 'Durchschnittliche Herzfrequenz', 'Verbrannte Kalorien', 'Verlorenes Wasser', 'Geschätzte Ankunft'],
                 chartsTitle: 'Live-Diagramme',
                 xAxis: 'X-Achse',
                 xDistance: 'Km',
@@ -953,6 +953,19 @@ function formatRelativeDate(timestamp) {
     if (diff < 3600) return `${Math.floor(diff / 60)}m fa`;
     return `${Math.floor(diff / 3600)}h fa`;
 }
+function formatEstimatedArrival(timestamp) {
+    if (!Number.isFinite(timestamp)) return '--';
+    const date = new Date(timestamp);
+    if (!Number.isFinite(date.getTime())) return '--';
+    const locale = currentLanguage === 'de' ? 'de-CH' : currentLanguage === 'en' ? 'en-CH' : 'it-CH';
+    return new Intl.DateTimeFormat(locale, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(date);
+}
 function parseDateTime(dateValue = '', timeValue = '') {
     const rawDate = String(dateValue || '').trim();
     const rawTime = String(timeValue || '').trim();
@@ -1483,6 +1496,53 @@ function extractHeartRateBpm(point) {
     const direct = Number(point?.frequenza_cardiaca?.bpm ?? point?.heartRateBeatsPerMin ?? point?.heartRate ?? Number.NaN);
     return Number.isFinite(direct) && direct > 0 ? Math.round(direct) : null;
 }
+function extractCaloriesBurnedKcal(point) {
+    const candidates = [
+        point?.calorie?.kcal,
+        point?.calories?.kcal,
+        point?.caloriesBurned,
+        point?.calories_burned,
+        point?.calories_bruciate,
+        point?.kcalBurned,
+        point?.kcal,
+        point?.calorie
+    ];
+    for (const candidate of candidates) {
+        const numeric = Number(candidate);
+        if (Number.isFinite(numeric) && numeric > 0) return Math.round(numeric);
+    }
+    return null;
+}
+function extractWaterLostLiters(point) {
+    const candidates = [
+        point?.water?.liters,
+        point?.water?.l,
+        point?.waterLostLiters,
+        point?.water_lost_liters,
+        point?.water_lost,
+        point?.waterLost,
+        point?.water?.lostLiters,
+        point?.acqua?.litri,
+        point?.acqua?.liters,
+        point?.litriAcqua,
+        point?.litri_acqua,
+        point?.acqua_persa,
+        point?.water_loss_liters
+    ];
+    for (const candidate of candidates) {
+        const numeric = Number(candidate);
+        if (Number.isFinite(numeric) && numeric >= 0) return Number(numeric.toFixed(1));
+    }
+    return null;
+}
+function extractLatestMetricValue(points, extractor) {
+    if (!Array.isArray(points) || !points.length) return null;
+    for (let index = points.length - 1; index >= 0; index -= 1) {
+        const value = extractor(points[index]);
+        if (value !== null) return value;
+    }
+    return null;
+}
 function computeMovingStats(points) {
     if (!Array.isArray(points) || points.length < 2) return { movingDuration: 0, movingDistanceKm: 0 };
     let movingSeconds = 0;
@@ -1514,6 +1574,45 @@ function computeAverageHeartRate(points) {
     if (!values.length) return null;
     const avg = values.reduce((acc, value) => acc + value, 0) / values.length;
     return Math.round(avg);
+}
+function computeEstimatedSteps(totalDistanceKm, durationSeconds) {
+    const distance = Math.max(0, Number(totalDistanceKm) || 0);
+    const hours = Math.max(0, Number(durationSeconds) || 0) / 3600;
+    const fatigueGain = Math.min(hours * 0.03, 0.35);
+    const stepsPerKm = 1420 * (1 + fatigueGain);
+    return Math.round(distance * stepsPerKm);
+}
+function estimateCaloriesBurnedKcal(totalDistanceKm, durationSeconds, elevationGainM, heartRateBpm = null, bodyWeightKg = 65) {
+    const distance = Math.max(0, Number(totalDistanceKm) || 0);
+    const movingHours = Math.max(0, Number(durationSeconds) || 0) / 3600;
+    const elevation = Math.max(0, Number(elevationGainM) || 0);
+    const heartRate = Number(heartRateBpm);
+    const weight = Math.max(0, Number(bodyWeightKg) || 70);
+
+    let estimate = distance * (70 + weight * 0.22) + movingHours * (230 + weight * 1.1) + elevation * 0.22;
+
+    if (Number.isFinite(heartRate) && heartRate > 0) {
+        const hrFactor = Math.max(0, (heartRate - 100) / 80);
+        estimate += estimate * (hrFactor * 0.08);
+    }
+
+    return Math.round(estimate);
+}
+function estimateWaterLostLiters(totalDistanceKm, durationSeconds, elevationGainM, heartRateBpm = null, bodyWeightKg = 60) {
+    const distance = Math.max(0, Number(totalDistanceKm) || 0);
+    const movingHours = Math.max(0, Number(durationSeconds) || 0) / 3600;
+    const elevation = Math.max(0, Number(elevationGainM) || 0);
+    const heartRate = Number(heartRateBpm);
+    const weight = Math.max(0, Number(bodyWeightKg) || 70);
+
+    let estimate = movingHours * (0.45 + weight * 0.0038) + distance * 0.045 + elevation * 0.0015;
+
+    if (Number.isFinite(heartRate) && heartRate > 0) {
+        const hrFactor = Math.max(0, (heartRate - 100) / 70);
+        estimate += hrFactor * 0.12;
+    }
+
+    return Number(Math.max(0, estimate).toFixed(1));
 }
 function computeMaxSpeedKmh(points) {
     if (!Array.isArray(points) || !points.length) return 0;
@@ -1573,6 +1672,10 @@ function buildSummary(points) {
         const diff = currentAlt - prevAlt;
         return acc + Math.max(diff, 0);
     }, 0);
+    const caloriesBurned = extractLatestMetricValue(points, extractCaloriesBurnedKcal)
+        ?? estimateCaloriesBurnedKcal(totalDistance, duration, elevationGain, heartRateBpm, 60);
+    const waterLostLiters = extractLatestMetricValue(points, extractWaterLostLiters)
+        ?? estimateWaterLostLiters(totalDistance, duration, elevationGain, heartRateBpm, 60);
     return {
         points,
         lastPoint,
@@ -1586,23 +1689,46 @@ function buildSummary(points) {
         maxSpeed,
         heartRateBpm,
         heartRateAvgBpm,
+        caloriesBurned,
+        waterLostLiters,
         elevationGain,
-        progress: Math.min(totalDistance / (gpxTotalKm || 290) * 100, 100),
+        progress: Math.min(totalDistance / (gpxTotalKm || 333) * 100, 100),
         status: resolveSummaryStatus(points, lastPoint, speed)
     };
 }
+function calculateSharedRemainingDistance(summary) {
+    const fallback = Math.max(0, (gpxTotalKm || 333) - (summary?.totalDistance || 0));
+    const blended = computeBlendedRemaining(summary);
+    return blended !== null ? blended : fallback;
+}
+
 function updateHomeSummary(summary) {
     if (!summary) return;
     const distanceText = summary.totalDistance === 0 ? '0' : summary.totalDistance.toFixed(1);
     document.getElementById('homeDistance').textContent = distanceText;
-    const blended = computeBlendedRemaining(summary);
-    const remaining = blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
+    const remaining = calculateSharedRemainingDistance(summary);
     const completion = computeDynamicProgress(summary.totalDistance, remaining);
     document.getElementById('homeRemaining').textContent = remaining.toFixed(1);
     document.getElementById('homeCompletion').textContent = `${completion.toFixed(1)}%`;
     document.getElementById('homeTime').textContent = summary.duration > 0 ? formatTime(summary.duration) : '0';
     document.getElementById('homeGain').textContent = Math.round(summary.elevationGain);
     document.getElementById('homeSteps').textContent = computeEstimatedSteps(summary.totalDistance, summary.duration).toLocaleString();
+    const homeEta = document.getElementById('homeEta');
+    if (homeEta) {
+        const etaSpeedKmh = summary.movingAvgSpeed > 0.2
+            ? summary.movingAvgSpeed
+            : summary.totalAvgSpeed > 0.2
+                ? summary.totalAvgSpeed
+                : summary.speed > 0.2
+                    ? summary.speed
+                    : 0;
+        if (etaSpeedKmh <= 0 || remaining <= 0) {
+            homeEta.textContent = remaining <= 0 ? t('status.completed') : '--';
+        } else {
+            const etaTimestamp = Date.now() + ((remaining / etaSpeedKmh) * 3600 * 1000);
+            homeEta.textContent = formatEstimatedArrival(etaTimestamp);
+        }
+    }
     const statusKey = normalizeHomeStatus(summary.status);
     document.getElementById('homeStatusLabel').textContent = translateStatus(statusKey);
     document.getElementById('homeStatusText').textContent = statusKey === 'moving'
@@ -1677,6 +1803,8 @@ function buildDashboardPreStartSummary() {
         maxSpeed: 0,
         heartRateBpm: null,
         heartRateAvgBpm: null,
+        caloriesBurned: 0,
+        waterLostLiters: 0,
         elevationGain: 0,
         progress: 0,
         status: 'not-started'
@@ -1708,11 +1836,13 @@ function updateDashboardSummary(summary) {
     const metricMovingTime = document.getElementById('metricMovingTime');
     const metricHeartRate = document.getElementById('metricHeartRate');
     const metricHeartRateAvg = document.getElementById('metricHeartRateAvg');
+    const metricCalories = document.getElementById('metricCalories');
+    const metricWaterLost = document.getElementById('metricWaterLost');
+    const metricEta = document.getElementById('metricEta');
 
     const distanceText = summary.totalDistance === 0 ? '0' : summary.totalDistance.toFixed(1);
     if (metricDistance) metricDistance.textContent = `${distanceText} km`;
-    const blended = computeBlendedRemaining(summary);
-    const remaining = blended !== null ? blended : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
+    const remaining = calculateSharedRemainingDistance(summary);
     const completion = computeDynamicProgress(summary.totalDistance, remaining);
     const completionText = completion === 0 ? '0%' : `${completion.toFixed(1)}%`;
     if (metricRemaining) metricRemaining.textContent = `${remaining.toFixed(1)} km`;
@@ -1728,6 +1858,24 @@ function updateDashboardSummary(summary) {
     if (metricMovingTime) metricMovingTime.textContent = summary.movingDuration > 0 ? formatTime(summary.movingDuration) : '0';
     if (metricHeartRate) metricHeartRate.textContent = Number.isFinite(summary.heartRateBpm) ? `${summary.heartRateBpm} bpm` : '-- bpm';
     if (metricHeartRateAvg) metricHeartRateAvg.textContent = Number.isFinite(summary.heartRateAvgBpm) ? `${summary.heartRateAvgBpm} bpm` : '-- bpm';
+    if (metricCalories) metricCalories.textContent = Number.isFinite(summary.caloriesBurned) ? `${summary.caloriesBurned.toLocaleString()} kcal` : '-- kcal';
+    if (metricWaterLost) metricWaterLost.textContent = Number.isFinite(summary.waterLostLiters) ? `${summary.waterLostLiters.toFixed(1)} L` : '-- L';
+
+    const etaSpeedKmh = summary.movingAvgSpeed > 0.2
+        ? summary.movingAvgSpeed
+        : summary.totalAvgSpeed > 0.2
+            ? summary.totalAvgSpeed
+            : summary.speed > 0.2
+                ? summary.speed
+                : 0;
+    if (metricEta) {
+        if (etaSpeedKmh <= 0 || remaining <= 0) {
+            metricEta.textContent = remaining <= 0 ? t('status.completed') : '--';
+        } else {
+            const etaTimestamp = Date.now() + ((remaining / etaSpeedKmh) * 3600 * 1000);
+            metricEta.textContent = formatEstimatedArrival(etaTimestamp);
+        }
+    }
 }
 function initHomeCountdown() {
     const dayEl = document.getElementById('countdownDays');
@@ -1911,7 +2059,7 @@ function haversineKm(lat1, lon1, lat2, lon2) {
 function computeBlendedRemaining(summary) {
     if (!summary) return null;
     const totalDistance = summary.totalDistance || 0;
-    const gpxtotal = gpxTotalKm || 290;
+    const gpxtotal = gpxTotalKm || 330.79;
     const remainingGpx = Math.max(0, gpxtotal - totalDistance);
     // fallback: if we don't have a live point or GPX coords, return GPX remaining
     if (!summary.lastPoint || !gpxCoords || !gpxCoords.length) return remainingGpx;
@@ -1942,6 +2090,38 @@ function computeEstimatedSteps(totalDistanceKm, durationSeconds) {
     const fatigueGain = Math.min(hours * 0.03, 0.35);
     const stepsPerKm = 1420 * (1 + fatigueGain);
     return Math.round(distance * stepsPerKm);
+}
+
+function estimateCaloriesBurnedKcal(totalDistanceKm, durationSeconds, elevationGainM, heartRateBpm = null) {
+    const distance = Math.max(0, Number(totalDistanceKm) || 0);
+    const movingHours = Math.max(0, Number(durationSeconds) || 0) / 3600;
+    const elevation = Math.max(0, Number(elevationGainM) || 0);
+    const heartRate = Number(heartRateBpm);
+
+    let estimate = distance * 70 + movingHours * 260 + elevation * 0.16;
+
+    if (Number.isFinite(heartRate) && heartRate > 0) {
+        const hrFactor = Math.max(0, (heartRate - 100) / 80);
+        estimate += estimate * (hrFactor * 0.08);
+    }
+
+    return Math.round(estimate);
+}
+
+function estimateWaterLostLiters(totalDistanceKm, durationSeconds, elevationGainM, heartRateBpm = null) {
+    const distance = Math.max(0, Number(totalDistanceKm) || 0);
+    const movingHours = Math.max(0, Number(durationSeconds) || 0) / 3600;
+    const elevation = Math.max(0, Number(elevationGainM) || 0);
+    const heartRate = Number(heartRateBpm);
+
+    let estimate = movingHours * 0.55 + distance * 0.035 + elevation * 0.0012;
+
+    if (Number.isFinite(heartRate) && heartRate > 0) {
+        const hrFactor = Math.max(0, (heartRate - 100) / 70);
+        estimate += hrFactor * 0.12;
+    }
+
+    return Number(Math.max(0, estimate).toFixed(1));
 }
 
 function stretchSeriesToRange(series, xMin, xMax, fallbackY = 0) {
@@ -2128,6 +2308,43 @@ function extractProgressUnlockIds(items) {
 async function loadProgressUnlockIds() {
     const items = await loadCollection('progressUnlocks');
     return new Set(extractProgressUnlockIds(items));
+}
+
+function sanitizeCantonKeys(keys) {
+    const normalized = (Array.isArray(keys) ? keys : [])
+        .map(value => normalizeSwissCanton(value))
+        .filter(Boolean);
+    return cantonOrder.filter(cantonKey => normalized.includes(cantonKey));
+}
+
+async function loadCantonManualControl() {
+    const fallback = { enabled: false, keys: [], updatedAt: null };
+    const publicUrl = getFirebaseContentUrl('cantonProgressManual');
+    if (!publicUrl) return fallback;
+    try {
+        const response = await fetch(publicUrl, { cache: 'no-store' });
+        if (!response.ok) return fallback;
+        const payload = await response.json();
+        if (!payload || typeof payload !== 'object') return fallback;
+        return {
+            enabled: Boolean(payload.enabled),
+            keys: sanitizeCantonKeys(payload.keys),
+            updatedAt: payload.updatedAt ?? null
+        };
+    } catch (error) {
+        console.warn('Impossibile leggere override manuale cantoni:', error);
+        return fallback;
+    }
+}
+
+function buildCantonProgressFromKeys(keys, locale) {
+    const orderedKeys = sanitizeCantonKeys(keys);
+    return {
+        count: orderedKeys.length,
+        total: cantonOrder.length,
+        keys: orderedKeys,
+        labels: orderedKeys.map(key => getCantonLabel(key, locale))
+    };
 }
 
 const cantonProgressCacheKey = 'northline-canton-progress-cache-v3';
@@ -2493,8 +2710,7 @@ function updateLiveUI(summary) {
     if (!summary) return;
     const distanceText = summary.totalDistance === 0 ? '0' : summary.totalDistance.toFixed(1);
     document.getElementById('distance').textContent = `${distanceText} km`;
-    const blendedRemaining = computeBlendedRemaining(summary);
-    const remaining = blendedRemaining !== null ? blendedRemaining : Math.max(0, (gpxTotalKm || 290) - summary.totalDistance);
+    const remaining = calculateSharedRemainingDistance(summary);
     const completion = computeDynamicProgress(summary.totalDistance, remaining);
     const completionText = completion === 0 ? '0%' : `${completion.toFixed(1)}%`;
     document.getElementById('remaining').textContent = `${remaining.toFixed(1)} km`;
@@ -3017,6 +3233,90 @@ async function persistProgressUnlocks(unlockedIds) {
     await persistCollection('progressUnlocks', items);
 }
 
+async function persistCantonManualControl(enabled, cantonKeys) {
+    const database = getFirebaseDatabase();
+    if (!database) {
+        throw new Error('Firebase non disponibile. Verifica configurazione e login admin.');
+    }
+    const payload = {
+        enabled: Boolean(enabled),
+        keys: sanitizeCantonKeys(cantonKeys),
+        updatedAt: new Date().toISOString()
+    };
+    await database.ref(`${contentDatabasePath}/cantonProgressManual`).set(payload);
+}
+
+async function renderAdminCantonOverrideForm() {
+    const list = document.getElementById('adminCantonOverrideList');
+    const toggle = document.getElementById('adminCantonOverrideEnabled');
+    const current = document.getElementById('adminCantonOverrideCurrent');
+    if (!list || !toggle) return;
+
+    const control = await loadCantonManualControl();
+    const selectedSet = new Set(control.keys || []);
+    toggle.checked = Boolean(control.enabled);
+    list.innerHTML = '';
+
+    cantonOrder.forEach(cantonKey => {
+        const label = document.createElement('label');
+        label.className = 'admin-hidden-progress-item';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = cantonKey;
+        checkbox.checked = selectedSet.has(cantonKey);
+
+        const text = document.createElement('div');
+        text.className = 'admin-hidden-progress-copy';
+        const title = document.createElement('strong');
+        title.textContent = getCantonLabel(cantonKey, 'it');
+        const subtitle = document.createElement('span');
+        subtitle.textContent = `ID: ${cantonKey}`;
+        text.append(title, subtitle);
+
+        label.append(checkbox, text);
+        list.appendChild(label);
+    });
+
+    if (current) {
+        current.textContent = control.enabled
+            ? `Modalita manuale attiva: ${control.keys.length}/7 cantoni selezionati.`
+            : 'Modalita automatica attiva: cantoni calcolati dai punti live.';
+    }
+}
+
+function bindAdminCantonOverrideForm() {
+    const form = document.getElementById('adminCantonOverrideForm');
+    const notice = document.getElementById('adminCantonOverrideNotice');
+    if (!form || form.dataset.bound === 'true') return;
+
+    const refresh = () => renderAdminCantonOverrideForm().catch(error => {
+        setAdminFeedbackMessage(notice, `Impossibile leggere override cantoni: ${error.message || 'errore sconosciuto'}.`, true);
+    });
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        setAdminFeedbackMessage(notice, '', false);
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+            const enabled = Boolean(form.querySelector('#adminCantonOverrideEnabled')?.checked);
+            const selectedKeys = Array.from(form.querySelectorAll('#adminCantonOverrideList input[type="checkbox"]:checked'))
+                .map(input => input.value)
+                .filter(Boolean);
+            await persistCantonManualControl(enabled, selectedKeys);
+            await refresh();
+            setAdminFeedbackMessage(notice, 'Override cantoni aggiornato su Firebase.', false);
+        } catch (error) {
+            setAdminFeedbackMessage(notice, `Salvataggio override cantoni fallito: ${error.message || 'errore sconosciuto'}.`, true);
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
+    });
+
+    refresh();
+    form.dataset.bound = 'true';
+}
+
 function bindAdminProgressUnlocksForm() {
     const form = document.getElementById('adminHiddenProgressForm');
     const notice = document.getElementById('adminHiddenProgressNotice');
@@ -3410,6 +3710,7 @@ function initAdminPage() {
             bindAdminForm('gallery');
             bindAdminLiveStatusForm();
             bindAdminProgressUnlocksForm();
+            bindAdminCantonOverrideForm();
             await syncNightGalleryEntriesToFirebase();
             await renderAdminCollection('gallery');
             loginForm.reset();
@@ -3433,6 +3734,7 @@ function initAdminPage() {
         bindAdminForm('gallery');
         bindAdminLiveStatusForm();
         bindAdminProgressUnlocksForm();
+        bindAdminCantonOverrideForm();
         syncNightGalleryEntriesToFirebase()
             .then(() => renderAdminCollection('gallery'))
             .catch(() => renderAdminCollection('gallery'));
@@ -3843,7 +4145,11 @@ async function initProgressPage() {
         Number(summary.duration || 0)
     );
     const locale = currentLanguage === 'de' ? 'de' : currentLanguage === 'en' ? 'en' : 'it';
-    const cantonProgress = await computeTraversedCantons(points, locale);
+    const autoCantonProgress = await computeTraversedCantons(points, locale);
+    const manualCantonControl = await loadCantonManualControl();
+    const cantonProgress = manualCantonControl.enabled
+        ? buildCantonProgressFromKeys(manualCantonControl.keys, locale)
+        : autoCantonProgress;
     const unlockedProgressIds = await loadProgressUnlockIds();
     const translations = {
         it: {
