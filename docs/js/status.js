@@ -11,14 +11,16 @@
         const start = parseTime(options.startDate || config.startDateIso);
         const latest = parseTime(options.latestPointTimestamp);
         const forced = String(options.forcedAdminState || '').trim().toLowerCase();
-        const validForced = ['not-started', 'live', 'resting', 'ended', 'finished'];
+        const validForced = ['not-started', 'offline', 'delayed', 'live', 'resting', 'ended', 'finished'];
         if (validForced.includes(forced)) return forced;
         if (options.finished === true) return 'finished';
         const hasPoints = options.hasValidPoints === true || latest !== null;
-        if (!hasPoints) return 'not-started';
+        if (!hasPoints) return start !== null && now >= start ? 'offline' : 'not-started';
         if (latest > now + 300000) return 'not-started';
         const trackerState = String(options.trackerState || '').toLowerCase();
         if (/stationary|paused|rest|stopped/.test(trackerState)) return 'resting';
+        const staleThreshold = Number(config.staleDataThresholdMs) || 180000;
+        if (latest !== null && now - latest > staleThreshold) return 'delayed';
         return 'live';
     }
     function normalizeHomeStatus(status) {

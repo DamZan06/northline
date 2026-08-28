@@ -8,7 +8,7 @@
         achievementDirection: 'forward',
         expectedDistanceKm: 300,
         expectedElevationM: 7000,
-        routeGpxUrl: 'data/route/Horizon.gpx',
+        routeGpxUrl: 'data/route/NorthLine.gpx',
         routeGeoJsonUrl: 'data/route/horizon-route.geojson',
         routeMetaUrl: 'data/route/horizon-route-meta.json',
         // Current public tracker backend; kept separate from the public NorthLine 2.0 branding.

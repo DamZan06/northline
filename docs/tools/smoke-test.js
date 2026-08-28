@@ -36,7 +36,7 @@ function run() {
   expect('home does not use a redundant global refresh scheduler', !app.includes('homeRefreshTimerId'));
   expect('map module is implemented', mapScript.includes('createMap') && mapScript.includes('loadRoute'));
   expect('firebase module is implemented', firebaseScript.includes('fetchLatestLivePoint') && firebaseScript.includes('normalizeLivePoint'));
-  expect('navigation module defines a canonical list', navScript.includes('NAV_ITEMS') && navScript.includes('Project') && navScript.includes('Journey'));
+  expect('navigation module defines a canonical list', navScript.includes('NAV_ITEMS') && navScript.includes("href: 'index.html'") && navScript.includes("href: 'live.html'") && navScript.includes("href: 'dashboard.html'") && navScript.includes("href: 'progress.html'") && navScript.includes("href: 'gallery.html'") && navScript.includes("href: 'replay.html'"));
   expect('gallery page controller exists', galleryPageScript.includes('HorizonGallery') && galleryPageScript.includes('initGalleryPage'));
   expect('replay page controller exists', replayPageScript.includes('HorizonReplay') && replayPageScript.includes('initReplayPage'));
   expect('dashboard page controller exists', dashboardPageScript.includes('HorizonDashboard') && dashboardPageScript.includes('initDashboardPage'));
@@ -50,14 +50,14 @@ function run() {
   expect('live page uses modular CSS entry points', live.includes('css/tokens.css') && live.includes('css/global.css') && live.includes('css/live.css') && !live.includes('style.css'));
   expect('dashboard page uses modular CSS entry points', dashboard.includes('css/tokens.css') && dashboard.includes('css/global.css') && dashboard.includes('css/dashboard.css') && !dashboard.includes('style.css'));
   expect('page scripts are loaded for gallery/replay/dashboard', gallery.includes('js/pages/gallery.js') && replay.includes('js/pages/replay.js') && dashboard.includes('js/pages/dashboard.js'));
-  expect('homepage canonical URL points to HorizonWeb', home.includes('https://damzan06.github.io/HorizonWeb/'));
-  expect('live canonical URL points to HorizonWeb', live.includes('https://damzan06.github.io/HorizonWeb/live.html'));
+  expect('homepage canonical URL points to northline', home.includes('https://damzan06.github.io/northline/'));
+  expect('live canonical URL points to northline', live.includes('https://damzan06.github.io/northline/live.html'));
   expect('live page no longer loads Chart.js', !live.includes('chart.js'));
   expect('live page uses a pinned Leaflet version', live.includes('leaflet@1.9.4'));
   expect('no legacy root-level CSS remains in active pages', !home.includes('href="style.css') && !live.includes('href="style.css') && !project.includes('href="style.css') && !gallery.includes('href="style.css') && !replay.includes('href="style.css'));
-  publicPages.forEach(file=>{const html=read(file);expect(`${file} uses canonical social preview`,/property="og:image"[^>]+preview_link_horizon\.png/.test(html)&&/name="twitter:image"[^>]+preview_link_horizon\.png/.test(html)&&/name="twitter:card" content="summary_large_image"/.test(html)&&!/((preview\.png)|(social-card\.png))/.test(html));});
+  publicPages.forEach(file=>{const html=read(file);const preview='(?:preview_link_horizon|northline-social-preview)\\.png';expect(`${file} uses an existing canonical social preview`,new RegExp(`property="og:image"[^>]+${preview}`).test(html)&&new RegExp(`name="twitter:image"[^>]+${preview}`).test(html)&&/name="twitter:card" content="summary_large_image"/.test(html));});
   expect('map uses configured route only', mapScript.includes('HorizonConfig.routeGeoJsonUrl')&&!mapScript.includes("|| 'data/route/horizon-route.geojson'"));
-  expect('finish marker uses required GIF', mapScript.includes("L.icon({iconUrl:'assets/icons/finish-flag.gif'"));
+  expect('finish marker uses the linked GIF', mapScript.includes("L.icon({iconUrl:'assets/icons/finish-flag.gif'"));
 
   console.log('All smoke checks passed.');
 }

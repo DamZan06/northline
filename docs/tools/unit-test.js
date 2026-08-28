@@ -53,7 +53,7 @@ const jump=[active[0],{...active[1],latitude:47.5,longitude:9.5,timestamp:120000
 check('GPS jump is rejected from polyline distance', stats.routeDistance(jump) === 0);
 const generatedRouteMeta=JSON.parse(fs.readFileSync(path.join(__dirname,'..','data','route','horizon-route-meta.json'),'utf8'));
 check('generated GPX metadata has a non-fallback distance', generatedRouteMeta.distanceKm>0 && generatedRouteMeta.distanceKm!==500);
-check('generated GPX endpoints are east to west', generatedRouteMeta.start.lng>generatedRouteMeta.finish.lng);
+check('generated GPX endpoints are north to south', generatedRouteMeta.start.lat>generatedRouteMeta.finish.lat);
 const generatedGeoJson=JSON.parse(fs.readFileSync(path.join(__dirname,'..','data','route','horizon-route.geojson'),'utf8'));
 const routeCoordinates=generatedGeoJson.features[0].geometry.coordinates;
 check('generated route is a full LineString', generatedGeoJson.features[0].geometry.type==='LineString'&&routeCoordinates.length>10000);
