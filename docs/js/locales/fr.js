@@ -181,7 +181,7 @@
     },
     "home": {
         "value10000M": "7 000 M+",
-        "value200H": "200H+",
+        "value200H": "130 H+",
         "value500Km": "300 KM",
         "adventureChaosQuestionableIdeas": "AVENTURE · CHAOS · IDÉES DOUTEUX",
         "challenge": "DÉFI",
