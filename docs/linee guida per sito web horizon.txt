@@ -1,0 +1,144 @@
+# HORIZON LIVE — MAKE IT AS RELIABLE AS NORTHLINE
+
+You are working on the HORIZON repository.
+
+**HORIZON:** https://github.com/DamZan06/HorizonWeb
+**Reference project:** https://github.com/DamZan06/northline/tree/main/docs
+
+Your objective is simple:
+
+**Make `HorizonWeb/live.html` work as reliably and smoothly as NorthLine's Live page while keeping HORIZON's current architecture and design.**
+
+Do not copy the giant NorthLine script. Instead, study how NorthLine implements each feature and port the logic cleanly into HORIZON's modular structure.
+
+## Required workflow
+
+First compare the Live implementations of both repositories function by function.
+
+Identify why NorthLine works and HORIZON does not.
+
+Then fix the real causes, not the symptoms.
+
+Continue testing until everything below works.
+
+---
+
+## Everything that must work
+
+### Planned route
+
+* Load the complete route from `Horizon.gpx`.
+* The GPX is the single source of truth.
+* Display the complete planned route on the Leaflet map.
+* Do not show only start and finish.
+* Use optimized GeoJSON for rendering if necessary, but generate it automatically from the GPX.
+* The route must load quickly without lag.
+
+### Finish
+
+* Use the existing `finish-flag.gif`.
+* Place it exactly on the last GPX coordinate.
+* Keep the correct waving animation.
+* Do not replace it with CSS or another icon.
+
+### Start
+
+* First GPX coordinate = start marker.
+* Last GPX coordinate = finish marker.
+* Both must always appear.
+
+### Athlete
+
+Read the **real Firebase track** exactly like NorthLine.
+
+The map must display:
+
+* complete travelled path;
+* current athlete marker;
+* latest position;
+* automatic updates.
+
+If Firebase contains valid points, the athlete has started.
+
+Do not classify the expedition as "not started" when tracking data already exists.
+
+### Visitor
+
+Restore NorthLine behaviour.
+
+When opening Live:
+
+* request browser geolocation automatically;
+* if permission is granted, immediately show my position;
+* keep the recenter button;
+* if permission is denied, fail gracefully without breaking the page.
+
+### ETA
+
+Restore the NorthLine-style estimated arrival.
+
+Calculate it from:
+
+* remaining GPX distance;
+* recent moving pace;
+* average moving speed.
+
+It must still work when the latest signal is delayed or during a short rest if enough historical data exists.
+
+Do not tie ETA exclusively to `state === live`.
+
+### Performance
+
+The page must feel instant.
+
+Avoid repeatedly parsing huge files or recreating the map.
+
+Optimize:
+
+* GPX loading;
+* GeoJSON rendering;
+* Firebase refresh;
+* polyline updates.
+
+Reuse layers instead of rebuilding everything every refresh.
+
+### Visual distinction
+
+Use clearly different styles:
+
+* **planned route:** thin, light ivory, dashed;
+* **actual athlete track:** thicker, solid HORIZON gold/orange;
+* **athlete marker:** unique live marker;
+* **visitor marker:** clearly different;
+* **start marker:** distinct from both;
+* **finish:** `finish-flag.gif`.
+
+---
+
+## Testing
+
+Before declaring completion, actually run the website locally and verify:
+
+* [ ] planned GPX route visible;
+* [ ] start marker visible;
+* [ ] finish flag visible;
+* [ ] athlete path visible from Firebase;
+* [ ] athlete marker visible;
+* [ ] visitor position appears after permission;
+* [ ] ETA works;
+* [ ] no infinite loading;
+* [ ] no broken route paths;
+* [ ] no console errors;
+* [ ] no unexplained 404/failed requests;
+* [ ] map remains smooth during refresh.
+
+Also compare the result visually and functionally against NorthLine Live.
+
+**Do not stop when the code looks correct. Stop only when the browser confirms that every feature above actually works.**
+
+At the end provide a concise report explaining:
+
+1. what was broken;
+2. why NorthLine worked;
+3. what you changed in HORIZON;
+4. which tests you executed.

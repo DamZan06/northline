@@ -1,53 +1,53 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NorthLine – Admin</title>
-    <meta name="description" content="Pannello admin NorthLine per gestire la galleria condivisa.">
+    <title data-i18n="admin.horizonAdmin">NorthLine 2.0 — Admin</title>
+    <meta name="description" content="NorthLine 2.0 admin panel to manage shared field notes and gallery." data-i18n-attr='{"content":"meta.adminDescription"}'>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css?v=20260725f">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260715r">
-    <link rel="icon" type="image/png" href="assets/favicon-v2.png?v=20260715r">
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260715r">
+    <link rel="stylesheet" href="css/tokens.css?v=20260828d">
+    <link rel="stylesheet" href="css/global.css?v=20260828q">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/logo_horizon_homepage.png?v=20260827a">
+    <link rel="icon" type="image/png" href="assets/logo_horizon_homepage.png?v=20260827a">
+    <link rel="apple-touch-icon" href="assets/logo_horizon_homepage.png?v=20260827a">
 </head>
 <body data-page="admin">
     <header class="topbar">
         <div class="brand">
-            <img src="assets/favicon-v2.png?v=20260715r" alt="Logo NorthLine" class="brand-icon">
+            <img src="assets/logo_horizon_homepage.png?v=20260827a" alt="Logo NorthLine 2.0" class="brand-icon" data-i18n-attr='{"alt":"admin.logoHorizon"}'>
             <div>
-                <span class="brand-title">NorthLine</span>
-                <span class="brand-subtitle">Admin</span>
+                <span class="brand-title" data-i18n="common.projectName">NorthLine 2.0</span>
+                <span class="brand-subtitle" data-i18n="common.admin">Admin</span>
             </div>
         </div>
-        <nav class="main-nav" aria-label="Navigazione principale">
-            <a href="index.html">Home</a>
-            <a href="live.html">Live</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="gallery.html">Galleria</a>
-            <a href="replay.html">Replay</a>
-            <a href="progress.html">Progressi</a>
-            <a href="project.html">Il progetto</a>
+        <nav class="main-nav" aria-label="Main navigation" data-i18n-attr='{"aria-label":"common.mainNavigation"}'>
+            <a href="index.html" data-i18n="common.home">Home</a>
+            <a href="live.html" data-i18n="common.live">Live</a>
+            <a href="project.html" data-i18n="common.project">Project</a>
+            <a href="gallery.html" data-i18n="common.journey">Journey</a>
+            <a href="replay.html" data-i18n="common.replay">Replay</a>
+            <a href="dashboard.html" data-i18n="common.dashboard">Dashboard</a>
         </nav>
     </header>
     <main class="page page-admin">
         <section id="adminLocked" class="section section-white">
             <div class="section-title">
-                <p class="eyebrow">Accesso riservato</p>
-                <h2>Pannello amministrazione</h2>
-                <p>Pagina non collegata alla navigazione pubblica. Inserisci email/password Firebase per accedere e pubblicare contenuti condivisi.</p>
+                <p class="eyebrow" data-i18n="admin.restrictedAccess">Restricted access</p>
+                <h1 data-i18n="admin.administrationPanel">Administration panel</h1>
+                <p data-i18n="admin.thisPageIsNotLinkedFromThePublic">This page is not linked from the public navigation. Enter your Firebase email and password to access and publish shared content.</p>
                 <p id="adminModeLabel"></p>
             </div>
             <form id="adminLoginForm" class="admin-login-form">
                 <label>
-                    Email Firebase
+                    <span data-i18n="admin.firebaseEmail">Firebase email</span>
                     <input type="email" name="email" autocomplete="username">
                 </label>
                 <label>
-                    Password
+                    <span data-i18n="admin.password">Password</span>
                     <input type="password" name="password" autocomplete="current-password" required>
                 </label>
-                <button type="submit" class="button primary">Entra</button>
+                <button type="submit" class="button primary" data-i18n="admin.signIn">Sign in</button>
                 <p id="adminLoginSuccess" class="admin-feedback"></p>
                 <p id="adminLoginError" class="admin-error"></p>
             </form>
@@ -55,129 +55,144 @@
 
         <section id="adminApp" class="section admin-section-stack" hidden>
             <div class="section-title">
-                <p class="eyebrow">Gestione contenuti</p>
-                <h2>Galleria</h2>
-                <p>Da qui puoi aggiungere, cancellare e spostare le immagini pubblicate sul sito.</p>
+                <p class="eyebrow" data-i18n="admin.contentManagement">Content management</p>
+                <h2 data-i18n="common.gallery">Gallery</h2>
+                <p data-i18n="admin.addDeleteAndReorderTheImagesPublishedOn">Add, delete and reorder the images published on the site from here.</p>
             </div>
             <div class="admin-toolbar">
                 <p id="adminSaveNotice" class="admin-feedback"></p>
-                <button id="adminLogoutBtn" type="button" class="button ghost">Esci</button>
+                <button id="adminLogoutBtn" type="button" class="button ghost" data-i18n="admin.logOut">Log out</button>
             </div>
 
-            <section class="section-white admin-block">
-                <div class="section-title">
-                    <h2>Stato live</h2>
-                    <p>Puoi forzare manualmente Fine giornata. Se Garmin invia MOVING in modo continuo per almeno 2 minuti, lo stato torna automaticamente a In movimento.</p>
+            <details class="section-white admin-block admin-collapsible">
+                <summary><span data-i18n="admin.liveStatus">Live status</span><small data-i18n="admin.changeTheExpeditionStatusShownPublicly">Change the expedition status shown publicly</small></summary>
+                <div class="admin-collapsible-content">
+                    <div class="section-title">
+                        <h2 data-i18n="admin.liveStatus">Live status</h2>
+                    <p data-i18n="admin.youCanManuallyForceEndOfDayIf">You can manually force End of day. If Garmin keeps sending MOVING for at least 2 minutes, the status returns automatically to Moving.</p>
+                    </div>
+                    <form id="adminLiveStatusForm" class="admin-form-grid">
+                        <label class="admin-form-full"><span data-i18n="admin.statusMode">Status mode</span>
+                            <select name="forcedStatus">
+                                <option value="" data-i18n="admin.automaticFromGarminFirebase">Automatic from Garmin/Firebase</option>
+                                <option value="ended" data-i18n="common.endOfDay">End of day</option>
+                                <option value="finished" data-i18n="admin.finishedArrivedAtChancy">Finished (arrived in Chiasso)</option>
+                            </select>
+                        </label>
+                        <p id="adminLiveStatusCurrent" class="admin-inline-note admin-form-full" data-i18n="admin.currentStatusLoading">Current status: loading...</p>
+                        <button type="submit" class="button primary" data-i18n="admin.saveLiveStatus">Save live status</button>
+                        <p id="adminLiveStatusNotice" class="admin-feedback admin-form-full"></p>
+                    </form>
                 </div>
-                <form id="adminLiveStatusForm" class="admin-form-grid">
-                    <label class="admin-form-full">Modalita stato
-                        <select name="forcedStatus">
-                            <option value="">Automatico da Garmin/Firebase</option>
-                            <option value="ended">Fine giornata</option>
-                        </select>
-                    </label>
-                    <p id="adminLiveStatusCurrent" class="admin-inline-note admin-form-full">Stato attivo: caricamento...</p>
-                    <button type="submit" class="button primary">Salva stato live</button>
-                    <p id="adminLiveStatusNotice" class="admin-feedback admin-form-full"></p>
-                </form>
-            </section>
+            </details>
 
             <section class="section-white admin-block">
                 <div class="section-title">
-                    <h2>Galleria</h2>
+                    <h2 data-i18n="common.gallery">Gallery</h2>
                 </div>
                 <form data-admin-form="gallery" class="admin-form-grid">
-                    <label>Titolo<input type="text" name="title" required></label>
-                    <label>Data
+                    <label><span data-i18n="common.title">Title</span><input type="text" name="title" required></label>
+                    <label><span data-i18n="common.date">Date</span>
                         <span class="admin-input-with-action">
-                            <input type="text" name="date" placeholder="01/08/2026">
-                            <button id="adminGalleryNowBtn" type="button" class="button secondary">Adesso</button>
+                            <input type="text" name="date" placeholder="01/08/2026" data-i18n-attr='{"placeholder":"admin.value01082026"}'>
+                            <button id="adminGalleryNowBtn" type="button" class="button secondary" data-i18n="admin.now">Now</button>
                         </span>
                     </label>
-                    <label>Orario<input type="text" name="time" placeholder="07:30"></label>
-                    <label>Km
+                    <label><span data-i18n="common.time">Time</span><input type="text" name="time" placeholder="07:30"></label>
+                    <label><span data-i18n="common.km">Km</span>
                         <span class="admin-input-with-action">
                             <input type="text" name="km" placeholder="18">
-                            <button id="adminGalleryKmNowBtn" type="button" class="button secondary">Km attuale</button>
+                            <button id="adminGalleryKmNowBtn" type="button" class="button secondary" data-i18n="admin.currentKm">Current km</button>
                         </span>
                     </label>
-                    <label>Localita
-                        <input type="text" name="location" placeholder="Impostata automaticamente da posizione" readonly>
+                    <label><span data-i18n="common.location">Location</span>
+                        <input type="text" name="location" placeholder="Automatically set from location" readonly data-i18n-attr='{"placeholder":"admin.automaticallySetFromLocation"}'>
                     </label>
-                    <label>Tag
-                        <input type="text" name="tag" placeholder="montagna" list="adminGalleryTagList" required>
-                        <datalist id="adminGalleryTagList">
-                            <option value="montagna"></option>
-                            <option value="checkpoint"></option>
-                            <option value="panorama"></option>
-                            <option value="bivacco"></option>
-                            <option value="citta"></option>
-                            <option value="lago"></option>
-                            <option value="notte"></option>
-                        </datalist>
-                        <span class="admin-tag-suggestions" aria-label="Tag suggeriti">
-                            <button type="button" class="admin-tag-chip" data-tag-suggestion="montagna">montagna</button>
-                            <button type="button" class="admin-tag-chip" data-tag-suggestion="checkpoint">checkpoint</button>
-                            <button type="button" class="admin-tag-chip" data-tag-suggestion="panorama">panorama</button>
-                            <button type="button" class="admin-tag-chip" data-tag-suggestion="bivacco">bivacco</button>
-                            <button type="button" class="admin-tag-chip" data-tag-suggestion="citta">citta</button>
-                            <button type="button" class="admin-tag-chip" data-tag-suggestion="lago">lago</button>
-                            <button type="button" class="admin-tag-chip" data-tag-suggestion="notte">notte</button>
-                        </span>
-                    </label>
-                    <label class="admin-form-full">Descrizione<textarea name="description" rows="4"></textarea></label>
-                    <label class="admin-form-full">Immagine<input type="file" name="image" accept="image/*" required></label>
+                    <label class="admin-form-full"><span data-i18n="common.description">Description</span><textarea name="description" rows="4"></textarea></label>
+                    <label class="admin-form-full"><span data-i18n="common.image">Image</span><input type="file" name="image" accept="image/*" required></label>
                     <div class="admin-form-full admin-inline-row">
-                        <button id="adminGalleryGeoBtn" type="button" class="button secondary">Usa posizione attuale</button>
-                        <button id="adminGalleryMapBtn" type="button" class="button secondary">Scegli su cartina</button>
-                        <span id="adminGalleryGeoStatus" class="admin-inline-note">Posizione non impostata</span>
+                        <button id="adminGalleryGeoBtn" type="button" class="button secondary" data-i18n="admin.useCurrentLocation">Use current location</button>
+                        <button id="adminGalleryMapBtn" type="button" class="button secondary" data-i18n="admin.chooseOnMap">Choose on map</button>
+                        <span id="adminGalleryGeoStatus" class="admin-inline-note" data-i18n="admin.locationNotSet">Location not set</span>
                     </div>
                     <div id="adminGalleryMapPickerWrap" class="admin-form-full admin-map-picker-wrap" hidden>
-                        <p class="admin-inline-note">Clicca sulla cartina per impostare la posizione della foto.</p>
-                        <div id="adminGalleryMapPicker" class="admin-map-picker"></div>
+                        <p class="admin-inline-note" data-i18n="admin.clickOnLlaCartinaPerImpostareLaPosizione">Click on
+lla cartina per impostare la posizione della foto.</p>                        <div id="adminGalleryMapPicker" class="admin-map-picker"></div>
                     </div>
                     <input type="hidden" name="lat">
                     <input type="hidden" name="lng">
-                    <button type="submit" class="button primary">Aggiungi alla galleria</button>
+                    <button type="submit" class="button primary" data-i18n="admin.addToGallery">Add to gallery</button>
                 </form>
                 <div data-admin-list="gallery" class="admin-item-list"></div>
             </section>
 
-            <section class="section-white admin-block">
+            <details class="section-white admin-block admin-collapsible">
+                <summary><span data-i18n="common.hiddenMilestones">Hidden milestones</span><small data-i18n="admin.chooseWhichSecretProgressBadgesAreVisible">Choose which secret progress badges are visible</small></summary>
+                <div class="admin-collapsible-content">
                 <div class="section-title">
-                    <h2>Traguardi nascosti</h2>
-                    <p>Sblocca manualmente i progressi nascosti che appariranno solo nella pagina pubblica dei progressi.</p>
+                    <h2 data-i18n="common.hiddenMilestones">Hidden milestones</h2>
+                    <p data-i18n="admin.unlockHiddenProgressManuallySoTheyAppearOnly">Unlock hidden progress manually so they appear only on the public progress page.</p>
                 </div>
                 <form id="adminHiddenProgressForm" class="admin-form-grid">
                     <div id="adminHiddenProgressList" class="admin-hidden-progress-list admin-form-full"></div>
-                    <button type="submit" class="button primary">Salva traguardi nascosti</button>
+                    <button type="submit" class="button primary" data-i18n="admin.saveHiddenMilestones">Save hidden milestones</button>
                     <p id="adminHiddenProgressNotice" class="admin-feedback admin-form-full"></p>
                 </form>
-            </section>
+                </div>
+            </details>
 
-            <section class="section-white admin-block">
+            <details class="section-white admin-block admin-collapsible">
+                <summary><span data-i18n="admin.progressCantons">Progress cantons</span><small data-i18n="admin.manageTheManualCantonOverride">Manage the manual canton override</small></summary>
+                <div class="admin-collapsible-content">
                 <div class="section-title">
-                    <h2>Cantoni progressi (manuale)</h2>
-                    <p>Attiva la modalita manuale e seleziona i cantoni gia attraversati. Se disattiva, la pagina Progressi torna al calcolo automatico dai punti live.</p>
+                    <h2 data-i18n="admin.progressCantonsManual">Progress cantons (manual)</h2>
+                    <p data-i18n="admin.theAutomaticGpsDetectionRemainsActiveSelectAdditional">The automatic GPS detection remains active. Select additional cantons here only when a manual correction is needed.</p>
                 </div>
                 <form id="adminCantonOverrideForm" class="admin-form-grid">
-                    <label class="admin-form-full">
-                        <input id="adminCantonOverrideEnabled" type="checkbox">
-                        Usa override manuale cantoni
-                    </label>
-                    <p id="adminCantonOverrideCurrent" class="admin-inline-note admin-form-full">Modalita automatica attiva: caricamento...</p>
+                    <p id="adminCantonOverrideCurrent" class="admin-inline-note admin-form-full" data-i18n="admin.automaticGpsDetectionActive2">Automatic GPS detection active.</p>
                     <div id="adminCantonOverrideList" class="admin-hidden-progress-list admin-form-full"></div>
-                    <button type="submit" class="button primary">Salva cantoni manuali</button>
+                    <button type="submit" class="button primary" data-i18n="admin.saveManualCantons">Save manual cantons</button>
                     <p id="adminCantonOverrideNotice" class="admin-feedback admin-form-full"></p>
                 </form>
-            </section>
+                </div>
+            </details>
+
+            <details class="section-white admin-block admin-collapsible">
+                <summary><span data-i18n="admin.mountainPasses">Mountain passes</span><small data-i18n="admin.manuallyActivatePassBadges">Manually activate pass badges</small></summary>
+                <div class="admin-collapsible-content">
+                    <div class="section-title">
+                        <h2 data-i18n="admin.mountainPassesManual">Mountain passes (manual)</h2>
+                        <p data-i18n="admin.theAutomaticGpsGeofenceRemainsActiveSelectAdditional">The automatic GPS geofence remains active. Select additional passes only when a manual correction is needed.</p>
+                    </div>
+                    <form id="adminPassOverrideForm" class="admin-form-grid">
+                        <p id="adminPassOverrideCurrent" class="admin-inline-note admin-form-full" data-i18n="admin.automaticGpsDetectionActive2">Automatic GPS detection active.</p>
+                        <div id="adminPassOverrideList" class="admin-hidden-progress-list admin-form-full"></div>
+                        <button type="submit" class="button primary" data-i18n="admin.saveManualPasses">Save manual passes</button>
+                        <p id="adminPassOverrideNotice" class="admin-feedback admin-form-full"></p>
+                    </form>
+                </div>
+            </details>
         </section>
     </main>
     <script src="firebase-config.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="script.js?v=20260729h"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js?v=20260828g"></script>
+    <script src="js/achievements.js?v=20260828b"></script>
+    <script src="js/firebase.js?v=20260828j"></script>
+    <script src="js/i18n.js?v=20260828l"></script>
+    <script src="js/locales/en.js?v=20260828m"></script>
+    <script src="js/locales/it.js?v=20260828m"></script>
+    <script src="js/locales/de.js?v=20260828m"></script>
+    <script src="js/locales/fr.js?v=20260828m"></script>
+    <script src="js/status.js?v=20260828k"></script>
+    <script src="js/stats.js?v=20260828b"></script>
+    <script src="js/route.js?v=20260828a"></script>
+    <script src="js/expedition.js?v=20260828d"></script>
+    <script src="js/pages/admin.js?v=20260828l"></script>
+    <script src="js/app.js?v=20260828k"></script>
 </body>
 </html>

@@ -1,10 +1,17 @@
 {
-  "name": "northline-web",
+  "name": "horizon-web",
   "version": "1.0.0",
   "private": true,
-  "description": "NorthLine static site local environment",
+  "description": "HorizonWeb static site local environment",
   "scripts": {
     "serve": "node tools/serve.js",
-    "test": "node --check script.js && node tools/smoke-test.js"
+    "build:route": "node tools/build-route.js",
+    "test": "node tools/js-syntax-check.js && node tools/i18n-check.js && node tools/unit-test.js && node tools/smoke-test.js",
+    "test:e2e": "playwright test tests/e2e.spec.js",
+    "start": "node tools/serve.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "playwright": "^1.62.1"
   }
 }

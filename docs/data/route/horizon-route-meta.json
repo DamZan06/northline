@@ -1,0 +1,20 @@
+{
+  "generatedFrom": "NorthLine.gpx",
+  "pointCount": 27158,
+  "distanceKm": 330.787,
+  "elevationGainM": 4495,
+  "start": {
+    "lat": 47.8082208779,
+    "lng": 8.5676563778
+  },
+  "finish": {
+    "lat": 45.8259066594,
+    "lng": 9.0140666007
+  },
+  "bounds": {
+    "south": 45.8179831064,
+    "west": 8.4502133926,
+    "north": 47.8109722167,
+    "east": 9.0436523174
+  }
+}

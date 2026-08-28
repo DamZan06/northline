@@ -24,6 +24,23 @@ const db = getDatabase(app);
 
 console.log("Firebase collegato");
 
+function sanitizeNumber(value, fallback = null) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) return numeric;
+    return fallback;
+}
+
+function sanitizeObject(value) {
+    if (value === null || value === undefined) return null;
+    if (Array.isArray(value)) return value.filter(item => item !== undefined);
+    if (typeof value === 'object') {
+        return Object.fromEntries(
+            Object.entries(value).filter(([, childValue]) => childValue !== undefined)
+        );
+    }
+    return value;
+}
+
 async function getSwissAltitude(lat, lon) {
 
 
@@ -73,11 +90,6 @@ let firstRun = true;
 async function getGarminData() {
 
     let begin;
-
-    console.log("SESSION_ID:", process.env.GARMIN_SESSION_ID);
-    console.log("TOKEN:", process.env.GARMIN_TOKEN);
-    console.log("CSRF:", process.env.GARMIN_CSRF_TOKEN);
-    console.log("COOKIE presente:", process.env.LIVETRACK_SESSION);
 
     if (firstRun) {
         console.log("Prima esecuzione: scarico tutto lo storico...");
@@ -143,50 +155,40 @@ async function getGarminData() {
             );
 
 
-            punti.push({
+            const safeSpeedMps = sanitizeNumber(p.speedMetersPerSec);
+            const safeSpeedKmh = safeSpeedMps === null ? null : Number((safeSpeedMps * 3.6).toFixed(1));
+            const safeHeartRate = sanitizeNumber(p.heartRateBeatsPerMin, 0);
+            const safeDurationSecs = sanitizeNumber(p.totalDurationSecs, 0);
+            const safeDistanceMeters = sanitizeNumber(p.totalDistanceMeters, 0);
+            const safeDistanceKm = safeDistanceMeters === null ? null : Number((safeDistanceMeters / 1000).toFixed(2));
 
+            punti.push(sanitizeObject({
                 id: new Date(p.dateTime).getTime(),
-
                 orario: p.dateTime,
-
-
-                coordinate: {
-                    lat: p.position.lat,
-                    lon: p.position.lon
-                },
-
-
-                distanza: {
-                    metri: p.totalDistanceMeters,
-                    km: Number((p.totalDistanceMeters / 1000).toFixed(2))
-                },
-
-
-                altitudine: {
-                    metri: altezzaSwiss
-                },
-
-
-                velocita: {
-                    m_s: p.speedMetersPerSec,
-                    km_h: Number((p.speedMetersPerSec * 3.6).toFixed(1))
-                },
-
-
-                frequenza_cardiaca: {
-                    bpm: Number(p.heartRateBeatsPerMin || 0)
-                },
-
-
-                tempo_trascorso: {
-                    secondi: p.totalDurationSecs,
-                    minuti: Number((p.totalDurationSecs / 60).toFixed(1))
-                },
-
-
+                coordinate: sanitizeObject({
+                    lat: sanitizeNumber(p.position?.lat),
+                    lon: sanitizeNumber(p.position?.lon)
+                }),
+                distanza: sanitizeObject({
+                    metri: safeDistanceMeters,
+                    km: safeDistanceKm
+                }),
+                altitudine: sanitizeObject({
+                    metri: sanitizeNumber(altezzaSwiss)
+                }),
+                velocita: sanitizeObject({
+                    m_s: safeSpeedMps,
+                    km_h: safeSpeedKmh
+                }),
+                frequenza_cardiaca: sanitizeObject({
+                    bpm: safeHeartRate
+                }),
+                tempo_trascorso: sanitizeObject({
+                    secondi: safeDurationSecs,
+                    minuti: safeDurationSecs === null ? null : Number((safeDurationSecs / 60).toFixed(1))
+                }),
                 stato: p.pointStatus
-
-            });
+            }));
 
         }
 

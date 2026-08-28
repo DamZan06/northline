@@ -1,0 +1,325 @@
+body {
+  margin: 0;
+  background: #1b262c;
+  color: #f5f2eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#main.page-live {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 0 64px;
+}
+
+.page-header {
+  margin: clamp(1.75rem, 4vw, 4rem) 0;
+  padding: clamp(1.4rem, 4vw, 3.5rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.page-header h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(3.6rem, 10vw, 9rem);
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+}
+
+.live-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.03);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-not-started {
+  background: #a1a9b3;
+}
+
+.map-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.stats-panel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+}
+
+.stats-grid,
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stats-grid article,
+.detail-grid article {
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  border-radius: 12px;
+  padding: 12px 10px;
+}
+
+.stats-grid span,
+.detail-grid span {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.75;
+  margin-bottom: 4px;
+}
+
+.stats-grid strong,
+.detail-grid strong {
+  font-size: 1.05rem;
+}
+
+.progress-card {
+  margin-top: 18px;
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--completed-route-start, #318fbd), var(--completed-route-current, #318fbd));
+  transition: width .35s ease, background .35s ease;
+}
+
+.map-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+}
+
+.map-toolbar {
+  display: contents;
+}
+
+.map-surface {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 560px;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #22323c;
+}
+
+/* The global responsive-image rule would otherwise collapse Leaflet icons
+   because marker panes intentionally have no intrinsic width. */
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  max-width: none;
+}
+
+/* The global responsive SVG rule collapses Leaflet's vector renderer to the
+   zero intrinsic width of a map pane. Without this override polylines exist
+   in the DOM but are clipped to a 0px-wide SVG and cannot be seen. */
+.leaflet-pane > svg {
+  max-width: none !important;
+}
+
+.leaflet-tile-pane {
+  filter: brightness(.72) saturate(.72) contrast(1.08);
+}
+
+.horizon-planned-route {
+  stroke-linecap: round;
+  filter: drop-shadow(0 1px 2px rgba(3,22,25,.8));
+}
+
+.horizon-actual-track {
+  filter: drop-shadow(0 1px 2px rgba(5,20,30,.9)) drop-shadow(0 0 3px rgba(49,143,189,.34));
+}
+
+.legend-planned { border-top-color:#d7e1e4; opacity:.65; }
+.legend-actual { height:4px;border:0;border-radius:999px;background:linear-gradient(90deg,var(--route-start,#318fbd),var(--route-finish,#f06432)); }
+
+.horizon-user-marker {
+  filter: drop-shadow(0 0 6px #168cff);
+}
+
+.horizon-map-label {
+  padding: 3px 7px;
+  color: #fff;
+  background: rgba(4, 10, 13, .94);
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.55);
+  font: 800 11px/1.2 var(--font-sans);
+}
+
+.horizon-map-label::before {
+  display: none;
+}
+
+.horizon-current-icon span,
+.horizon-user-icon span,
+.horizon-start-icon span {
+  display: grid;
+  place-items: center;
+  border: 4px solid #fff;
+  border-radius: 50% 50% 50% 12%;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 14px rgba(0,0,0,.65);
+}
+
+.horizon-current-icon span { width:40px;height:40px;background:var(--athlete-color,#ffaa45);box-shadow:0 0 0 5px color-mix(in srgb,var(--athlete-color,#ffaa45) 22%,transparent),0 4px 12px #000; }
+.horizon-user-icon span { width:36px;height:36px;background:#087cff; }
+.horizon-start-icon span { width:38px;height:38px;background:#16a34a; }
+.horizon-current-icon svg { width:22px;height:22px;fill:#fff;transform:rotate(45deg); }
+.horizon-user-icon svg,.horizon-start-icon svg { width:20px;height:20px;fill:#fff;transform:rotate(45deg); }
+
+.horizon-current-icon,
+.horizon-user-icon,
+.horizon-start-icon {
+  background: transparent;
+  border: 0;
+}
+
+.map-status {
+  color: rgba(245, 242, 235, 0.96);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  background: rgba(255,255,255,0.04);
+}
+
+.map-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.map-actions .geo-button {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(10,15,22,0.8);
+  color: #f5f2eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.geo-button svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
+.map-actions .geo-button:hover,
+.map-actions .geo-button:focus-visible {
+  color: #d6b77a;
+  border-color: #d6b77a;
+}
+
+@media (max-width: 520px) {
+  .map-actions {
+    right: 8px;
+    top: 8px;
+    max-width: calc(100% - 16px);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .map-actions .geo-button {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+}
+
+.map-accessibility {
+  margin-top: 18px;
+  opacity: 0.85;
+}
+
+@media (max-width: 900px) {
+  .map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-panel {
+    order: 2;
+  }
+
+  .map-wrap {
+    order: 1;
+    height: auto;
+  }
+
+  .map-surface {
+    min-height: 420px;
+  }
+
+  #map {
+    height: 420px;
+  }
+}

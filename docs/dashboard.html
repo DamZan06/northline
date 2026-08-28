@@ -1,158 +1,182 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NorthLine - Dashboard</title>
-    <meta name="description" content="Dashboard NorthLine con statistiche live, grafici e progressi di percorso.">
+    <title data-i18n="dashboard.horizonTelemetry">NorthLine 2.0 — Telemetry</title>
+    <meta name="description" content="NorthLine 2.0 telemetry: distance, progress, time, elevation and performance charts for the expedition." data-i18n-attr='{"content":"meta.dashboardDescription"}'>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="canonical" href="https://damzan06.github.io/northline/dashboard.html">
-    <meta property="og:title" content="NorthLine - Dashboard">
-    <meta property="og:description" content="Statistiche live e grafici dell'avventura NorthLine.">
+    <link rel="canonical" href="https://damzan06.github.io/NorthLineWeb/dashboard.html">
+    <meta property="og:title" content="NorthLine 2.0 — Telemetry" data-i18n-attr='{"content":"meta.dashboardSocialTitle"}'>
+    <meta property="og:description" content="Core telemetry and charts for the NorthLine 2.0 crossing." data-i18n-attr='{"content":"meta.dashboardSocialDescription"}'>
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://damzan06.github.io/northline/dashboard.html">
-    <meta property="og:image" content="https://damzan06.github.io/northline/assets/preview.png?v=20260715s">
-    <meta property="og:image:secure_url" content="https://damzan06.github.io/northline/assets/preview.png?v=20260715s">
+    <meta property="og:url" content="https://damzan06.github.io/NorthLineWeb/dashboard.html">
+    <meta property="og:image" content="https://damzan06.github.io/NorthLineWeb/assets/preview_link_horizon.png?v=20260827a">
+    <meta property="og:image:secure_url" content="https://damzan06.github.io/NorthLineWeb/assets/preview_link_horizon.png?v=20260827a">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1254">
     <meta property="og:image:height" content="1254">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="NorthLine - Dashboard">
-    <meta name="twitter:description" content="Statistiche live e grafici dell'avventura NorthLine.">
-    <meta name="twitter:image" content="https://damzan06.github.io/northline/assets/preview.png?v=20260715s">
-    <link rel="stylesheet" href="style.css?v=20260725d">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260715r">
-    <link rel="icon" type="image/png" href="assets/favicon-v2.png?v=20260715r">
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260715r">
+    <meta name="twitter:title" content="NorthLine 2.0 — Dashboard" data-i18n-attr='{"content":"meta.dashboardTwitterTitle"}'>
+    <meta name="twitter:description" content="Live data and charts from the NorthLine 2.0 expedition." data-i18n-attr='{"content":"meta.dashboardTwitterDescription"}'>
+    <meta name="twitter:image" content="https://damzan06.github.io/NorthLineWeb/assets/preview_link_horizon.png?v=20260827a">
+    <link rel="stylesheet" href="css/tokens.css?v=20260828d">
+    <link rel="stylesheet" href="css/global.css?v=20260828q">
+    <link rel="stylesheet" href="css/dashboard.css?v=20260828b">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/logo_northline_homepage.png?v=20260827a">
+    <link rel="icon" type="image/png" href="assets/logo_northline_homepage.png?v=20260827a">
+    <link rel="apple-touch-icon" href="assets/logo_northline_homepage.png?v=20260827a">
 </head>
 <body data-page="dashboard">
+    <a href="#main" class="skip-link" data-i18n="common.skipToMainContent">Skip to main content</a>
     <header class="topbar">
-        <div class="brand">
-            <img src="assets/favicon-v2.png?v=20260715r" alt="Logo NorthLine" class="brand-icon">
+        <a href="index.html" class="brand" aria-label="NorthLine 2.0 home" data-i18n-attr='{"aria-label":"common.horizonHome"}'>
+            <img src="assets/logo_northline_homepage.png?v=20260827a" alt="NorthLine 2.0 logo" class="brand-icon" data-i18n-attr='{"alt":"common.horizonLogo"}'>
             <div>
-                <span class="brand-title">NorthLine</span>
-                <span class="brand-subtitle">Dashboard</span>
+                <span class="brand-title" data-i18n="common.projectName">NorthLine 2.0</span>
+                <span class="brand-subtitle" data-i18n="dashboard.telemetry">Telemetry</span>
             </div>
-        </div>
-        <nav class="main-nav" aria-label="Navigazione principale">
-            <a href="index.html">Home</a>
-            <a href="live.html">Live</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="gallery.html">Galleria</a>
-            <a href="replay.html">Replay</a>
-            <a href="progress.html">Progressi</a>
-            <a href="project.html">Il progetto</a>
+        </a>
+        <nav class="main-nav" aria-label="Main navigation" data-i18n-attr='{"aria-label":"common.mainNavigation"}'>
+            <a href="index.html" data-i18n="common.home">Home</a>
+            <a href="live.html" data-i18n="common.live">Live</a>
+            <a href="project.html" data-i18n="common.project">Project</a>
+            <a href="gallery.html" data-i18n="common.journey">Journey</a>
+            <a href="replay.html" data-i18n="common.replay">Replay</a>
+            <a href="dashboard.html" aria-current="page" data-i18n="common.dashboard">Dashboard</a>
         </nav>
     </header>
-    <main class="page page-dashboard">
+    <main id="main" class="page page-dashboard">
         <section class="section">
             <div class="section-title">
-                <p class="eyebrow">Analisi avanzata</p>
-                <h2>Dashboard delle statistiche.</h2>
-                <p>Statistiche sportive complete con grafici per velocita, altitudine, andamento giornaliero e progressione.</p>
+                <p class="eyebrow" data-i18n="dashboard.advancedAnalysis">Advanced analysis</p>
+                <h1 data-i18n="dashboard.expeditionDashboard">Expedition dashboard.</h1>
+                <p data-i18n="dashboard.completeSportTelemetryWithChartsForSpeedAltitude">Complete sport telemetry with charts for speed, altitude, daily progress and route progression.</p>
             </div>
-            <div class="stats-grid">
+            <div class="dashboard-hero-grid">
+                <article class="dashboard-focus"><span data-dash="covered" data-i18n="dashboard.distanceCovered">Distance covered</span><strong id="metricDistance">-- km</strong></article>
+                <article class="dashboard-focus"><span data-dash="planned" data-i18n="dashboard.plannedGpxDistance">Planned GPX distance</span><strong id="metricPlannedDistance">-- km</strong></article>
+                <article class="dashboard-focus"><span data-dash="remaining" data-i18n="dashboard.distanceRemaining">Distance remaining</span><strong id="metricRemaining">-- km</strong></article>
+                <article class="dashboard-focus"><span data-dash="completion" data-i18n="common.completion">Completion</span><strong id="metricCompletion">--%</strong></article>
+                <article class="dashboard-focus dashboard-eta"><span id="metricEtaLabel" data-dash="eta" data-i18n="common.arrival">Arrival</span><strong id="metricEta">--</strong><small id="metricEtaBasis"></small></article>
+            </div>
+            <h2 class="metric-group-title" data-dash="performance" data-i18n="dashboard.performance">Performance</h2>
+            <div class="stats-grid dashboard-metrics">
                 <article>
-                    <span>Distanza percorsa</span>
-                    <strong id="metricDistance">-- km</strong>
-                </article>
-                <article>
-                    <span>Distanza rimanente</span>
-                    <strong id="metricRemaining">-- km</strong>
-                </article>
-                <article>
-                    <span>Percentuale completata</span>
-                    <strong id="metricCompletion">--%</strong>
-                </article>
-                <article>
-                    <span>Velocita attuale</span>
+                    <span data-i18n="dashboard.currentSpeed">Current speed</span>
                     <strong id="metricSpeed">-- km/h</strong>
                 </article>
                 <article>
-                    <span>Velocita media in movimento</span>
+                    <span data-i18n="dashboard.averageMovingSpeed">Average moving speed</span>
                     <strong id="metricAvgMovingSpeed">-- km/h</strong>
                 </article>
                 <article>
-                    <span>Velocita media totale</span>
+                    <span data-i18n="dashboard.averageTotalSpeed">Average total speed</span>
                     <strong id="metricAvgTotalSpeed">-- km/h</strong>
                 </article>
                 <article>
-                    <span>Velocita massima</span>
+                    <span data-i18n="dashboard.maximumSpeed">Maximum speed</span>
                     <strong id="metricMaxSpeed">-- km/h</strong>
                 </article>
                 <article>
-                    <span>Altitudine attuale</span>
+                    <span data-i18n="dashboard.currentAltitude">Current altitude</span>
                     <strong id="metricAltitude">-- m</strong>
                 </article>
                 <article>
-                    <span>Dislivello positivo</span>
+                    <span data-i18n="dashboard.positiveElevationGain">Positive elevation gain</span>
                     <strong id="metricElevation">-- m</strong>
                 </article>
+                <article><span data-dash="elevationLoss" data-i18n="dashboard.elevationLoss">Elevation loss</span><strong id="metricElevationLoss">-- m</strong></article>
+                <article><span data-dash="plannedElevation" data-i18n="dashboard.plannedGpxElevationGain">Planned GPX elevation gain</span><strong id="metricPlannedElevation">-- m</strong></article>
                 <article>
-                    <span>Tempo totale</span>
+                    <span data-i18n="dashboard.totalTime">Total time</span>
                     <strong id="metricTime">--</strong>
                 </article>
                 <article>
-                    <span>Tempo in movimento</span>
+                    <span data-i18n="dashboard.movingTime">Moving time</span>
                     <strong id="metricMovingTime">--</strong>
                 </article>
+                <article><span data-dash="stoppedTime" data-i18n="dashboard.stoppedTime">Stopped time</span><strong id="metricStoppedTime">--</strong></article>
+                <article><span data-dash="departure" data-i18n="dashboard.actualDeparture">Actual departure</span><strong id="metricActualDeparture">--</strong></article>
+                <article><span data-dash="latest" data-i18n="dashboard.latestUpdate">Latest update</span><strong id="metricLatestUpdate">--</strong></article>
                 <article>
-                    <span>Frequenza cardiaca</span>
+                    <span data-i18n="dashboard.heartRate">Heart rate</span>
                     <strong id="metricHeartRate">-- bpm</strong>
                 </article>
                 <article>
-                    <span>Frequenza cardiaca media</span>
+                    <span data-i18n="dashboard.averageHeartRate">Average heart rate</span>
                     <strong id="metricHeartRateAvg">-- bpm</strong>
                 </article>
+                <article><span data-dash="maxHeartRate" data-i18n="dashboard.maximumHeartRate">Maximum heart rate</span><strong id="metricHeartRateMax">-- bpm</strong></article>
+                <article><span data-dash="steps" data-i18n="dashboard.estimatedSteps">Estimated steps</span><strong id="metricSteps">--</strong></article>
                 <article>
-                    <span>Calorie bruciate</span>
+                    <span data-i18n="dashboard.caloriesBurned">Calories burned</span>
                     <strong id="metricCalories">-- kcal</strong>
                 </article>
                 <article>
-                    <span>Acqua persa</span>
+                    <span data-i18n="dashboard.waterLoss">Water loss</span>
                     <strong id="metricWaterLost">-- L</strong>
                 </article>
-                <article>
-                    <span>Arrivo stimato</span>
-                    <strong id="metricEta">--</strong>
-                </article>
             </div>
+            <div class="tracker-strip" aria-live="polite">
+                <div><span data-dash="trackerState" data-i18n="dashboard.trackerState">Tracker state</span><strong id="metricTrackingStatus">--</strong></div>
+                <div><span data-dash="signalAge" data-i18n="dashboard.signalAge">Signal age</span><strong id="metricSignalAge">--</strong></div>
+                <div><span data-dash="points" data-i18n="dashboard.recordedPoints">Recorded points</span><strong id="metricPointCount">--</strong></div>
+            </div>
+            <details class="technical-details">
+                <summary data-dash="technical" data-i18n="dashboard.technicalDetails">Technical details</summary>
+                <dl>
+                    <div><dt data-dash="firstTimestamp" data-i18n="dashboard.firstTimestamp">First timestamp</dt><dd id="techFirstTimestamp">--</dd></div>
+                    <div><dt data-dash="latestTimestamp" data-i18n="dashboard.latestTimestamp">Latest timestamp</dt><dd id="techLatestTimestamp">--</dd></div>
+                    <div><dt data-i18n="dashboard.latitude">Latitude</dt><dd id="techLatitude">--</dd></div>
+                    <div><dt data-i18n="dashboard.longitude">Longitude</dt><dd id="techLongitude">--</dd></div>
+                    <div><dt data-dash="altitude" data-i18n="common.altitude">Altitude</dt><dd id="techAltitude">--</dd></div>
+                    <div><dt data-dash="firebaseState" data-i18n="dashboard.firebaseState">Firebase state</dt><dd id="techFirebaseState">--</dd></div>
+                    <div><dt data-dash="gpxPoints" data-i18n="dashboard.gpxRoutePoints">GPX route points</dt><dd id="techGpxPoints">--</dd></div>
+                    <div><dt data-dash="routeBounds" data-i18n="dashboard.gpxRouteBounds">GPX route bounds</dt><dd id="techRouteBounds">--</dd></div>
+                </dl>
+            </details>
         </section>
         <section class="section section-white">
             <div class="section-title chart-header">
-                <h2>Grafici live</h2>
-                <label class="chart-axis-control" for="chartXAxisMode">
-                    Asse X
-                    <select id="chartXAxisMode" aria-label="Seleziona asse X grafici">
-                        <option value="distance">Km</option>
-                        <option value="time">Tempo</option>
-                    </select>
-                </label>
+                <h2 data-i18n="dashboard.liveCharts">Live charts</h2>
             </div>
             <div class="chart-grid">
                 <article class="metric-card">
-                    <div class="chart-card-head"><h3>Velocita</h3><button type="button" class="chart-fullscreen-btn" aria-label="Ingrandisci grafico" title="Ingrandisci grafico">Full</button></div>
+                    <div class="chart-card-head"><h3 data-i18n="common.speed">Speed</h3><button type="button" class="chart-fullscreen-btn" aria-label="Expand chart" title="Expand chart" data-i18n="common.full" data-i18n-attr='{"aria-label":"dashboard.expandChart","title":"dashboard.expandChart"}'>Full</button></div>
                     <canvas id="chartSpeed"></canvas>
                 </article>
                 <article class="metric-card">
-                    <div class="chart-card-head"><h3>Altitudine</h3><button type="button" class="chart-fullscreen-btn" aria-label="Ingrandisci grafico" title="Ingrandisci grafico">Full</button></div>
+                    <div class="chart-card-head"><h3 data-i18n="common.altitude">Altitude</h3><button type="button" class="chart-fullscreen-btn" aria-label="Expand chart" title="Expand chart" data-i18n="common.full" data-i18n-attr='{"aria-label":"dashboard.expandChart","title":"dashboard.expandChart"}'>Full</button></div>
                     <canvas id="chartAltitude"></canvas>
                 </article>
                 <article class="metric-card">
-                    <div class="chart-card-head"><h3>Frequenza cardiaca</h3><button type="button" class="chart-fullscreen-btn" aria-label="Ingrandisci grafico" title="Ingrandisci grafico">Full</button></div>
+                    <div class="chart-card-head"><h3 data-i18n="dashboard.heartRate">Heart rate</h3><button type="button" class="chart-fullscreen-btn" aria-label="Expand chart" title="Expand chart" data-i18n="common.full" data-i18n-attr='{"aria-label":"dashboard.expandChart","title":"dashboard.expandChart"}'>Full</button></div>
                     <canvas id="chartHeartRate"></canvas>
                 </article>
                 <article class="metric-card">
-                    <div class="chart-card-head"><h3>Dislivello cumulato</h3><button type="button" class="chart-fullscreen-btn" aria-label="Ingrandisci grafico" title="Ingrandisci grafico">Full</button></div>
+                    <div class="chart-card-head"><h3 data-i18n="dashboard.cumulativeElevation">Cumulative elevation</h3><button type="button" class="chart-fullscreen-btn" aria-label="Expand chart" title="Expand chart" data-i18n="common.full" data-i18n-attr='{"aria-label":"dashboard.expandChart","title":"dashboard.expandChart"}'>Full</button></div>
                     <canvas id="chartElevation"></canvas>
                 </article>
             </div>
         </section>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js?v=20260729a"></script>
+    <script src="js/config.js?v=20260828g"></script>
+    <script src="js/i18n.js?v=20260828l"></script>
+    <script src="js/locales/en.js?v=20260828m"></script>
+    <script src="js/locales/it.js?v=20260828m"></script>
+    <script src="js/locales/de.js?v=20260828m"></script>
+    <script src="js/locales/fr.js?v=20260828m"></script>
+    <script src="js/ui/navigation.js?v=20260828k"></script>
+    <script src="js/status.js?v=20260828k"></script>
+    <script src="js/stats.js?v=20260828b"></script>
+    <script src="js/firebase.js?v=20260828d"></script>
+    <script src="js/route.js?v=20260828a"></script>
+    <script src="js/expedition.js?v=20260828f"></script>
+    <script src="js/app.js?v=20260828k"></script>
+    <script src="js/pages/dashboard.js?v=20260828k"></script>
 </body>
 </html>
-
 
 
 
