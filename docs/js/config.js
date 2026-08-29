@@ -2,7 +2,7 @@
     const config = {
         projectName: 'NorthLine 2.0',
         expeditionYear: 2026,
-        startDateIso: '2026-08-30T10:00:00+02:00',
+        startDateIso: '2026-08-31T04:00:00+02:00',
         startLocation: 'Bargen',
         finishLocation: 'Chiasso',
         achievementDirection: 'forward',
