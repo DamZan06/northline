@@ -17,6 +17,7 @@
         "replayDescription": "Revivez la traversée NorthLine 2.0 avec les commandes de lecture, pause, redémarrage et vitesse."
     },
     "common": {
+        "visits": "Visites",
         "projectName": "NorthLine 2.0",
         "value0Km": "0 km",
         "acrossSwitzerland": "Dans toute la Suisse",

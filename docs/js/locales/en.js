@@ -17,6 +17,7 @@
         "replayDescription": "Relive the NorthLine 2.0 crossing with replay controls for playback, pause, restart and speed."
     },
     "common": {
+        "visits": "Visits",
         "projectName": "NorthLine 2.0",
         "value0Km": "0 km",
         "acrossSwitzerland": "Across Switzerland",

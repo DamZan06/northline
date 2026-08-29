@@ -17,6 +17,7 @@
         "replayDescription": "Erlebe die NorthLine 2.0-Durchquerung mit Wiedergabe-, Pause-, Neustart- und Geschwindigkeitssteuerung erneut."
     },
     "common": {
+        "visits": "Besuche",
         "projectName": "NorthLine 2.0",
         "value0Km": "0 km",
         "acrossSwitzerland": "Quer durch die Schweiz",

@@ -17,6 +17,7 @@
         "replayDescription": "Rivivi la traversata NorthLine 2.0 con i comandi per riprodurre, mettere in pausa, ricominciare e cambiare velocità."
     },
     "common": {
+        "visits": "Visite",
         "projectName": "NorthLine 2.0",
         "value0Km": "0 km",
         "acrossSwitzerland": "In tutta la Svizzera",

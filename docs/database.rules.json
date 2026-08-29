@@ -19,6 +19,13 @@
         "updatedAt": { ".validate": "newData.val() == null || newData.isNumber()" },
         "$other": { ".validate": false }
       },
+      "siteStats": {
+        "visits": {
+          ".read": true,
+          ".write": "newData.isNumber() && ((!data.exists() && newData.val() == 1) || (data.isNumber() && newData.val() == data.val() + 1))"
+        },
+        "$other": { ".validate": false }
+      },
       "liveStatus": {
         ".read": true,
         ".write": "auth != null",
