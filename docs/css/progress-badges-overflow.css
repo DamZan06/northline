@@ -12,7 +12,7 @@
 
 /* Restore breathing room between the category description and the badge row. */
 .page-progress .achievement-track {
-    padding-top: 1.35rem;
+    padding-top: 1.2rem;
 }
 
 /* Keep the visible badge roughly as large as the previous 136px window. */
@@ -31,7 +31,7 @@
 
 /* Progress line vertical position. Lower this offset to move the line upward. */
 .page-progress .achievement-line {
-    top: calc(1.35rem + 47px);
+    top: calc(1.2rem + 47px);
 }
 
 @media (max-width: 700px) {
@@ -41,10 +41,10 @@
     }
 
     .page-progress .achievement-track {
-        padding-top: 1.15rem;
+        padding-top: 1rem;
     }
 
     .page-progress .achievement-line {
-        top: calc(1.15rem + 48px);
+        top: calc(1rem + 48px);
     }
 }
