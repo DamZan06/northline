@@ -1,18 +1,31 @@
 /* Keep achievement artwork fully visible, including crowns, rays and other details that extend beyond the medal circle. */
 .page-progress .achievement-medal {
+    width: 118px;
+    height: 118px;
     overflow: visible;
 }
 
-/*
- * Badge PNGs have different amounts of transparent padding. Scaling the whole
- * bitmap therefore makes the visible emblems look uneven. The image remains
- * inside one common square and JS normalises the visible alpha bounds so the
- * actual badge artwork (not the PNG canvas) has a consistent visual size.
- */
+/* Keep the visible badge roughly as large as the previous 136px window. */
 .page-progress .achievement-medal img {
     width: 100%;
     height: 100%;
     margin: auto;
     object-fit: contain;
     transform-origin: center;
+}
+
+/* Re-align the progression line with the smaller badge window. */
+.page-progress .achievement-line {
+    top: 77px;
+}
+
+@media (max-width: 700px) {
+    .page-progress .achievement-medal {
+        width: 102px;
+        height: 102px;
+    }
+
+    .page-progress .achievement-line {
+        top: 69px;
+    }
 }
