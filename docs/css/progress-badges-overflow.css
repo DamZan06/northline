@@ -10,6 +10,11 @@
     display: none;
 }
 
+/* Restore breathing room between the category description and the badge row. */
+.page-progress .achievement-track {
+    padding-top: 1.35rem;
+}
+
 /* Keep the visible badge roughly as large as the previous 136px window. */
 .page-progress .achievement-medal img {
     width: 100%;
@@ -19,9 +24,9 @@
     transform-origin: center;
 }
 
-/* Re-align the progression line with the smaller badge window. */
+/* Keep the progression line centred on the badge row after the added spacing. */
 .page-progress .achievement-line {
-    top: 52px;
+    top: calc(1.35rem + 52px);
 }
 
 @media (max-width: 700px) {
@@ -30,7 +35,11 @@
         height: 102px;
     }
 
+    .page-progress .achievement-track {
+        padding-top: 1.15rem;
+    }
+
     .page-progress .achievement-line {
-        top: 53px;
+        top: calc(1.15rem + 53px);
     }
 }
