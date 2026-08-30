@@ -3,10 +3,16 @@
     overflow: visible;
 }
 
-/* Give every badge a little breathing room so elaborate artwork is not visually cramped. */
+/*
+ * Badge PNGs have different amounts of transparent padding. Scaling the whole
+ * bitmap therefore makes the visible emblems look uneven. The image remains
+ * inside one common square and JS normalises the visible alpha bounds so the
+ * actual badge artwork (not the PNG canvas) has a consistent visual size.
+ */
 .page-progress .achievement-medal img {
-    width: 95%;
-    height: 95%;
+    width: 100%;
+    height: 100%;
     margin: auto;
     object-fit: contain;
+    transform-origin: center;
 }
