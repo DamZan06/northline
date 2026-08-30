@@ -29,9 +29,9 @@
     margin-top: 0.3rem;
 }
 
-/* Keep the progression line centred on the badge row after the added spacing. */
+/* Progress line vertical position. Lower this offset to move the line upward. */
 .page-progress .achievement-line {
-    top: calc(1.35rem + 52px);
+    top: calc(1.35rem + 47px);
 }
 
 @media (max-width: 700px) {
@@ -45,6 +45,6 @@
     }
 
     .page-progress .achievement-line {
-        top: calc(1.15rem + 53px);
+        top: calc(1.15rem + 48px);
     }
 }
