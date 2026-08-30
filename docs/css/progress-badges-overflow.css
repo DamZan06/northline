@@ -1,7 +1,7 @@
 /* Keep achievement artwork fully visible, including crowns, rays and other details that extend beyond the medal circle. */
 .page-progress .achievement-medal {
-    width: 118px;
-    height: 118px;
+    width: 100px;
+    height: 100px;
     overflow: visible;
 }
 

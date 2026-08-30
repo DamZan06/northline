@@ -1,7 +1,7 @@
 (function () {
-    const TARGET_FILL = 0.90;
-    const MAX_SCALE = 1.28;
-    const MIN_SCALE = 0.82;
+    const TARGET_FILL = 1.15;
+    const MAX_SCALE = 1.45;
+    const MIN_SCALE = 0.5;
 
     function visibleBounds(image) {
         const canvas = document.createElement('canvas');
@@ -36,7 +36,7 @@
             const centerX = (box.left + box.right) / 2;
             const centerY = (box.top + box.bottom) / 2;
             const shiftX = (box.size / 2 - centerX) * scale;
-            const shiftY = (box.size / 2 - centerY) * scale;
+            const shiftY = (box.size / 2 - centerY) * scale - 5;
             image.style.transform = `translate(${shiftX}px, ${shiftY}px) scale(${scale})`;
         } catch (error) {
             // If canvas inspection is unavailable, keep the original image untouched.
