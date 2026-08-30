@@ -24,6 +24,11 @@
     transform-origin: center;
 }
 
+/* Add a small visual gap between the badge artwork and its label below. */
+.page-progress .achievement-name {
+    margin-top: 0.3rem;
+}
+
 /* Keep the progression line centred on the badge row after the added spacing. */
 .page-progress .achievement-line {
     top: calc(1.35rem + 52px);
