@@ -1,5 +1,10 @@
 (function () {
     const EARTH_RADIUS_KM = 6371.0088;
+    // Garmin LiveTrack altitude samples systematically undercount the cumulative
+    // ascent/descent after filtering. Calibrated against the current expedition:
+    // ~1,196 m raw corresponds to ~2,400 m measured ascent.
+    const ELEVATION_GAIN_CALIBRATION = 2.0;
+    const ELEVATION_LOSS_CALIBRATION = 2.0;
     const number = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
     function distanceKm(a, b) {
@@ -23,8 +28,10 @@
         (points||[]).forEach(point=>{const altitude=number(point.altitude),timestamp=number(point.timestamp);if(altitude===null||altitude < -500||altitude > 9000)return;const previous=valid.at(-1);if(previous){const elapsed=Math.max(0,(timestamp-previous.timestamp)/1000),jump=Math.abs(altitude-previous.altitude);if(jump>80&&(!elapsed||jump/elapsed>5))return;}valid.push({altitude,timestamp});});
         return valid.map((sample,index,array)=>{const values=array.slice(Math.max(0,index-1),Math.min(array.length,index+2)).map(x=>x.altitude).sort((a,b)=>a-b);return values[Math.floor(values.length/2)];});
     }
-    function elevationGain(points) { const altitudes=filteredAltitudes(points);let gain=0,anchor=altitudes[0];altitudes.slice(1).forEach(altitude=>{const delta=altitude-anchor;if(delta>=.6){gain+=delta;anchor=altitude;}else if(delta<=-.6)anchor=altitude;});return gain; }
-    function elevationLoss(points) { const altitudes=filteredAltitudes(points);let loss=0,anchor=altitudes[0];altitudes.slice(1).forEach(altitude=>{const delta=altitude-anchor;if(delta<=-.6){loss+=Math.abs(delta);anchor=altitude;}else if(delta>=.6)anchor=altitude;});return loss; }
+    function rawElevationGain(points) { const altitudes=filteredAltitudes(points);let gain=0,anchor=altitudes[0];altitudes.slice(1).forEach(altitude=>{const delta=altitude-anchor;if(delta>=.6){gain+=delta;anchor=altitude;}else if(delta<=-.6)anchor=altitude;});return gain; }
+    function rawElevationLoss(points) { const altitudes=filteredAltitudes(points);let loss=0,anchor=altitudes[0];altitudes.slice(1).forEach(altitude=>{const delta=altitude-anchor;if(delta<=-.6){loss+=Math.abs(delta);anchor=altitude;}else if(delta>=.6)anchor=altitude;});return loss; }
+    function elevationGain(points) { return rawElevationGain(points) * ELEVATION_GAIN_CALIBRATION; }
+    function elevationLoss(points) { return rawElevationLoss(points) * ELEVATION_LOSS_CALIBRATION; }
     function summarize(points, totalKm) {
         const list = points || [], total = number(totalKm) || 500;
         const recorded = number(list.at(-1)?.cumulativeDistanceKm);
