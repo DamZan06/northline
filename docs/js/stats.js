@@ -2,9 +2,8 @@
     const EARTH_RADIUS_KM = 6371.0088;
     // Garmin LiveTrack altitude samples systematically undercount the cumulative
     // ascent/descent after filtering. Calibrated against the current expedition:
-    // ~1,196 m raw corresponds to ~2,400 m measured ascent.
-    const ELEVATION_GAIN_CALIBRATION = 2.0;
-    const ELEVATION_LOSS_CALIBRATION = 2.0;
+    // ~1,196 m raw corresponds to ~1,450 m measured ascent.
+    const ELEVATION_CALIBRATION = 1.212;
     const number = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
     function distanceKm(a, b) {
@@ -30,8 +29,8 @@
     }
     function rawElevationGain(points) { const altitudes=filteredAltitudes(points);let gain=0,anchor=altitudes[0];altitudes.slice(1).forEach(altitude=>{const delta=altitude-anchor;if(delta>=.6){gain+=delta;anchor=altitude;}else if(delta<=-.6)anchor=altitude;});return gain; }
     function rawElevationLoss(points) { const altitudes=filteredAltitudes(points);let loss=0,anchor=altitudes[0];altitudes.slice(1).forEach(altitude=>{const delta=altitude-anchor;if(delta<=-.6){loss+=Math.abs(delta);anchor=altitude;}else if(delta>=.6)anchor=altitude;});return loss; }
-    function elevationGain(points) { return rawElevationGain(points) * ELEVATION_GAIN_CALIBRATION; }
-    function elevationLoss(points) { return rawElevationLoss(points) * ELEVATION_LOSS_CALIBRATION; }
+    function elevationGain(points) { return rawElevationGain(points) * ELEVATION_CALIBRATION; }
+    function elevationLoss(points) { return rawElevationLoss(points) * ELEVATION_CALIBRATION; }
     function summarize(points, totalKm) {
         const list = points || [], total = number(totalKm) || 500;
         const recorded = number(list.at(-1)?.cumulativeDistanceKm);
