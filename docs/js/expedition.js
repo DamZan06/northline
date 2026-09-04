@@ -78,7 +78,7 @@
         const isAtFinish = Number.isFinite(distanceToFinishKm) && distanceToFinishKm <= 0.02;
         const remainingDistanceKm=isAtFinish ? 0 : Math.max(0,plannedDistanceKm-coveredDistanceKm);
         const completionPercent=isAtFinish ? 100 : window.HorizonStats.clamp(coveredDistanceKm/plannedDistanceKm*100,0,100);
-        const finished = isAtFinish || completionPercent>=99.9;
+        const finished = isAtFinish;
         const state=window.HorizonStatus.getExpeditionState({now,startDate:window.HorizonConfig.startDateIso,hasValidPoints:Boolean(list.length),latestPointTimestamp:latestPoint?.timestamp,trackerState:latestPoint?.trackerState,finished,forcedAdminState});
         const etaResult=calculateEta({remainingDistanceKm,recentMovingSpeedKmh,movingAverageSpeedKmh,averageSpeedKmh,latestPointTimestamp:latestPoint?.timestamp,now,pointCount:list.length,finished});
         const heartRates=list.map(p=>Number(p.heartRate)).filter(v=>valid(v)&&v>30&&v<240);
