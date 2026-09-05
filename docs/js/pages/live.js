@@ -36,7 +36,7 @@
             altitude: Number.isFinite(summary.currentAltitudeM) ? `${Math.round(summary.currentAltitudeM)} m` : tr("common.notAvailable", "Not available"),
             lastUpdate: new Intl.DateTimeFormat(document.documentElement.lang || 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(latest.timestamp),
             time: `${(summary.elapsedTimeMs/3600000).toFixed(1)} h`, elevation: `${Math.round(summary.actualElevationGainM)} m`,
-            steps: Math.round(summary.coveredDistanceKm * 1300).toLocaleString(document.documentElement.lang || 'en')
+            steps: `≈ ${new Intl.NumberFormat(document.documentElement.lang || 'en', { maximumFractionDigits: 0 }).format(summary.coveredDistanceKm * 1000 / 0.75)}`
         } : {
             distance: '0 km', remaining: `${summary.plannedDistanceKm || config.expectedDistanceKm || 500} km`, completion: '0%', completionText: '0%',
             speed: tr("common.notAvailable", "Not available"), altitude: tr("common.notAvailable", "Not available"), lastUpdate: tr("common.notAvailable", "Not available"), time: '0 h', elevation: '0 m', steps: '0'
