@@ -1,0 +1,39 @@
+name: Temporary increase center zoom
+
+on:
+  push:
+    paths:
+      - '.github/workflows/tmp-increase-center-zoom.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Increase center zoom
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('docs/js/map.js')
+          s = p.read_text()
+          old_live = "function centerLive() { return map && liveMarker ? centerOnPosition(liveMarker.getLatLng(), Math.max(map.getZoom(), 10)) : false; }"
+          new_live = "function centerLive() { return map && liveMarker ? centerOnPosition(liveMarker.getLatLng(), Math.max(map.getZoom(), 13)) : false; }"
+          old_user = "function centerUser() { if (map && userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 10)); return Boolean(userMarker); }"
+          new_user = "function centerUser() { if (map && userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 13)); return Boolean(userMarker); }"
+          if old_live not in s or old_user not in s:
+              raise SystemExit('Expected center functions not found')
+          s = s.replace(old_live, new_live).replace(old_user, new_user)
+          p.write_text(s)
+          PY
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/js/map.js
+          git commit -m "feat: zoom closer when centering position"
+          git push origin HEAD:main
