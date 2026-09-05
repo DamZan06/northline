@@ -38,7 +38,7 @@
         const currentColor = unlockedTrackColor(progressPercent);
         const path = trackLayer?._path;
         const svg = path?.ownerSVGElement;
-        if (path && svg) {
+        if (path && svg && map) {
             let defs = svg.querySelector('defs');
             if (!defs) defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs'), svg.prepend(defs);
             let gradient = defs.querySelector(`#${TRACK_GRADIENT_ID}`);
@@ -49,11 +49,21 @@
                 gradient.innerHTML = '<stop offset="0%"></stop><stop offset="100%"></stop>';
                 defs.appendChild(gradient);
             }
-            const coordinates = (path.getAttribute('d') || '').match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
-            if (coordinates.length >= 4) {
-                gradient.setAttribute('x1', coordinates[0]); gradient.setAttribute('y1', coordinates[1]);
-                gradient.setAttribute('x2', coordinates.at(-2)); gradient.setAttribute('y2', coordinates.at(-1));
+
+            // Anchor the gradient to the complete recorded route, not to the part of
+            // the SVG path currently visible in the viewport. Leaflet clips/redraws
+            // the path while zooming, so reading the rendered `d` attribute made the
+            // blue->red gradient restart every time the visible map area changed.
+            const latlngs = trackLayer.getLatLngs?.().flat(Infinity).filter((p) => p && Number.isFinite(p.lat) && Number.isFinite(p.lng)) || [];
+            if (latlngs.length >= 2) {
+                const startPoint = map.latLngToLayerPoint(latlngs[0]);
+                const endPoint = map.latLngToLayerPoint(latlngs.at(-1));
+                gradient.setAttribute('x1', startPoint.x);
+                gradient.setAttribute('y1', startPoint.y);
+                gradient.setAttribute('x2', endPoint.x);
+                gradient.setAttribute('y2', endPoint.y);
             }
+
             const stops = gradient.querySelectorAll('stop');
             stops[0].setAttribute('stop-color', TRACK_START_COLOR);
             stops[1].setAttribute('stop-color', currentColor);
