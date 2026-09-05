@@ -292,8 +292,8 @@
         map.fitBounds(plannedRouteBounds, { padding: [40, 40] });
     }
 
-    function centerLive() { return map && liveMarker ? centerOnPosition(liveMarker.getLatLng(), Math.max(map.getZoom(), 10)) : false; }
-    function centerUser() { if (map && userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 10)); return Boolean(userMarker); }
+    function centerLive() { return map && liveMarker ? centerOnPosition(liveMarker.getLatLng(), Math.max(map.getZoom(), 13)) : false; }
+    function centerUser() { if (map && userMarker) map.setView(userMarker.getLatLng(), Math.max(map.getZoom(), 13)); return Boolean(userMarker); }
     function zoomIn() { if (map) map.zoomIn(); }
     function zoomOut() { if (map) map.zoomOut(); }
     function cycleTileLayer() {
