@@ -3,7 +3,7 @@ const vm = require('vm');
 const path = require('path');
 const context = { window: { HorizonConfig: { startDateIso: '2026-08-31T04:00:00+02:00', expectedDistanceKm: 500, staleDataThresholdMs: 180000 } }, console, Date };
 vm.createContext(context);
-for (const file of ['js/status.js', 'js/stats.js', 'js/firebase.js', 'js/expedition.js']) {
+for (const file of ['js/status.js', 'js/stats.js', 'js/firebase.js', 'js/route.js', 'js/expedition.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), context, { filename: file });
 }
 function check(name, condition) { if (!condition) throw new Error(`FAIL: ${name}`); console.log(`PASS: ${name}`); }
@@ -23,12 +23,12 @@ check('out-of-range point rejected', firebase.normalizeLivePoint({lat:100,lng:8,
 check('points sort and deduplicate', firebase.normalizeLivePoints([{lat:1,lng:2,timestamp:2},{lat:1,lng:2,timestamp:2},{lat:1,lng:3,timestamp:1}]).length === 2);
 const imported = firebase.normalizeLivePoint({coordinate:{lat:46.5,lon:8.2},orario:'2026-08-31T04:00:00Z',altitudine:{metri:900},velocita:{km_h:5},frequenza_cardiaca:{bpm:123},distanza:{km:42.5}});
 check('real Firebase tracker payload normalizes', imported.speed === 5 && imported.heartRate === 123 && imported.cumulativeDistanceKm === 42.5);
-check('recorded cumulative distance drives progress', stats.summarize([{...imported,cumulativeDistanceKm:42.5}],500).coveredKm === 42.5);
+check('recorded cumulative distance remains real walked distance', stats.summarize([{...imported,cumulativeDistanceKm:42.5}],500).coveredKm === 42.5);
 const engine=context.window.HorizonExpedition, routeMeta={distanceKm:520,elevationGainM:3500};
 const active=[{...imported,timestamp:100000,cumulativeDistanceKm:0,speed:5},{...imported,longitude:8.21,timestamp:160000,cumulativeDistanceKm:1,speed:5}];
 const activeSummary=engine.calculateSummary({points:active,routeMeta,now:170000});
 check('central summary starts from valid points before planned date', activeSummary.started && activeSummary.state === 'live');
-check('central summary uses GPX distance', activeSummary.plannedDistanceKm === 520 && activeSummary.remainingDistanceKm === 519);
+check('central summary falls back to walked distance without route geometry', activeSummary.plannedDistanceKm === 520 && activeSummary.remainingDistanceKm === 519);
 check('moving track produces ETA', Number.isFinite(activeSummary.eta));
 const finishMeta = { ...routeMeta, finish: { lat: 46.1320502409, lng: 5.9563402346 } };
 const nearFinish = { ...active[1], latitude: finishMeta.finish.lat, longitude: finishMeta.finish.lng, cumulativeDistanceKm: 519.9 };
@@ -59,3 +59,20 @@ const routeCoordinates=generatedGeoJson.features[0].geometry.coordinates;
 check('generated route is a full LineString', generatedGeoJson.features[0].geometry.type==='LineString'&&routeCoordinates.length>10000);
 check('generated route coordinate count matches GPX metadata', routeCoordinates.length===generatedRouteMeta.pointCount);
 check('generated route endpoints match metadata', Math.abs(routeCoordinates[0][0]-generatedRouteMeta.start.lng)<1e-8&&Math.abs(routeCoordinates.at(-1)[0]-generatedRouteMeta.finish.lng)<1e-8);
+
+const bellinzonaPoint={...active[1],latitude:46.22039512731135,longitude:9.043488800525665,cumulativeDistanceKm:297.9};
+const bellinzonaSummary=engine.calculateSummary({points:[active[0],bellinzonaPoint],routeMeta:generatedRouteMeta,routeGeometry:generatedGeoJson,now:170000});
+check('real walked distance keeps detours', Math.abs(bellinzonaSummary.coveredDistanceKm-297.9)<1e-9);
+check('remaining distance follows GPX position, not walked distance', bellinzonaSummary.remainingDistanceKm>60&&bellinzonaSummary.remainingDistanceKm<70);
+check('completion follows GPX position, not walked distance', bellinzonaSummary.completionPercent>75&&bellinzonaSummary.completionPercent<85);
+check('route progress is exposed separately from walked distance', bellinzonaSummary.routeProgressKm<bellinzonaSummary.coveredDistanceKm);
+
+// End-of-route regression: simulate the tracker exactly on the third-last point of the generated GPX route.
+const thirdLastCoordinate=routeCoordinates.at(-3);
+const thirdLastProjection=context.window.HorizonRoute.locateProgress({latitude:thirdLastCoordinate[1],longitude:thirdLastCoordinate[0]},generatedGeoJson);
+check('third-last GPX point projects to the final route metres', thirdLastProjection&&thirdLastProjection.progressKm>generatedRouteMeta.distanceKm-0.1);
+const thirdLastPoint={...active[1],latitude:thirdLastCoordinate[1],longitude:thirdLastCoordinate[0],cumulativeDistanceKm:generatedRouteMeta.distanceKm+10};
+const thirdLastSummary=engine.calculateSummary({points:[active[0],thirdLastPoint],routeMeta:generatedRouteMeta,routeGeometry:generatedGeoJson,now:170000});
+check('third-last GPX point is treated as finished inside the 20 m finish radius', thirdLastSummary.state==='finished'&&thirdLastSummary.remainingDistanceKm===0&&thirdLastSummary.completionPercent===100);
+check('third-last GPX test preserves extra walked distance', thirdLastSummary.coveredDistanceKm>thirdLastSummary.routeProgressKm+9.8);
+console.log(`THIRD_LAST_RESULT walked=${thirdLastSummary.coveredDistanceKm.toFixed(3)}km route=${thirdLastSummary.routeProgressKm.toFixed(3)}km remaining=${thirdLastSummary.remainingDistanceKm.toFixed(3)}km completion=${thirdLastSummary.completionPercent.toFixed(2)}% state=${thirdLastSummary.state}`);
