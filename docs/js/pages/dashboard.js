@@ -6,14 +6,39 @@ const date=v=>Number.isFinite(v)?new Intl.DateTimeFormat(L(),{dateStyle:'medium'
 const duration=v=>{if(!Number.isFinite(v))return tr().na;let x=Math.floor(v/1000),h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=x%60;return[h,m,s].map(n=>String(n).padStart(2,'0')).join(':')};
 const age=v=>{if(!Number.isFinite(v))return tr().na;let m=Math.floor(v/60000),x=m<60?m+' min':m<1440?Math.floor(m/60)+' h':Math.floor(m/1440)+' d',marker=tx("dashboard.ago", "ago");return ['de','fr'].includes(L())?marker+' '+x:x+' '+marker};
 
+function ensureExtraDistanceCard(){
+  let value=document.getElementById('metricExtraDistance');
+  if(value)return value;
+  const grid=document.querySelector('.dashboard-hero-grid');
+  if(!grid)return null;
+  const card=document.createElement('article');
+  card.className='dashboard-focus';
+  const label=document.createElement('span');
+  label.id='metricExtraDistanceLabel';
+  label.textContent=tx("dashboard.extraDistance", "Extra km");
+  const strong=document.createElement('strong');
+  strong.id='metricExtraDistance';
+  strong.textContent='-- km';
+  card.append(label,strong);
+  const planned=document.getElementById('metricPlannedDistance')?.closest('.dashboard-focus');
+  if(planned)planned.after(card);else grid.append(card);
+  return strong;
+}
+
 function update(s={}){
   S.summary=s;
   const p=s.latestPoint||{},r=s.routeMeta||{};
+  ensureExtraDistanceCard();
+  const extraLabel=document.getElementById('metricExtraDistanceLabel');
+  if(extraLabel)extraLabel.textContent=tx("dashboard.extraDistance", "Extra km");
+  const actualDistance=Number(s.coveredDistanceKm),routeProgress=Number(s.routeProgressKm);
+  const extraDistanceKm=Number.isFinite(actualDistance)&&Number.isFinite(routeProgress)?Math.max(0,actualDistance-routeProgress):null;
   const etaLabel=document.getElementById('metricEtaLabel');
   if(etaLabel)etaLabel.textContent=s.completedAt?tx("common.arrival", "Arrival"):tx("common.estimatedArrival", "Estimated arrival");
   const rows=[
     ['metricDistance',av(s.coveredDistanceKm,' km')],
     ['metricPlannedDistance',av(s.plannedDistanceKm,' km')],
+    ['metricExtraDistance',av(extraDistanceKm,' km')],
     ['metricRemaining',av(s.remainingDistanceKm,' km')],
     ['metricCompletion',av(s.completionPercent,' %')],
     ['metricSpeed',av(s.currentSpeedKmh,' km/h')],
@@ -74,6 +99,7 @@ async function refresh(){
 }
 
 function initDashboardPage(){
+  ensureExtraDistanceCard();
   document.querySelectorAll('.chart-card-head').forEach(h=>{let p=document.createElement('p');p.className='empty-state';p.textContent=tx("dashboard.telemetryWillAppearOnceTrackingBegins", "Telemetry will appear once tracking begins.");h.after(p)});
   document.querySelectorAll('.chart-fullscreen-btn').forEach(b=>b.onclick=async()=>document.fullscreenElement?document.exitFullscreen():b.closest('.metric-card').requestFullscreen());
   const chartXAxisMode=document.getElementById('chartXAxisMode');
