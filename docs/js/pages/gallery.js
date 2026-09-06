@@ -158,8 +158,18 @@
         modalImage.src = item.imageUrl || item.thumbnailUrl;
         modalImage.alt = item.title;
         modalTitle.textContent = item.title;
-        modalLocation.textContent = item.location || tr("gallery.horizonRoute", "HORIZON route");
-        modalDescription.textContent = item.description || tr("gallery.horizonGalleryEntry", "HORIZON gallery entry.");
+        const modalMeta = [
+            item.location || '',
+            item.date || '',
+            item.time || '',
+            item.km ? `${item.km} km` : ''
+        ].filter(Boolean);
+        modalLocation.textContent = modalMeta.join(' · ');
+        modalLocation.hidden = modalMeta.length === 0;
+
+        const description = String(item.description || '').trim();
+        modalDescription.textContent = description;
+        modalDescription.hidden = !description;
         modal.setAttribute('data-active-index', String(index));
         modal.classList.add('is-open');
         modal.querySelector('.modal-close')?.focus();
