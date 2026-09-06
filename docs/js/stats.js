@@ -1,9 +1,9 @@
 (function () {
     const EARTH_RADIUS_KM = 6371.0088;
-    // Garmin LiveTrack altitude samples systematically undercount the cumulative
-    // ascent/descent after filtering. Calibrated against the current expedition:
-    // ~1,196 m raw corresponds to ~1,450 m measured ascent.
-    const ELEVATION_CALIBRATION = 1.212;
+    // Calibrated against the current expedition data on 2026-09-06:
+    // raw gain 7,352.4 m corresponds to ~9,100 m measured ascent.
+    // The same calibration factor is intentionally applied to both gain and loss.
+    const ELEVATION_CALIBRATION = 1.237691094;
     const number = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
     function distanceKm(a, b) {
